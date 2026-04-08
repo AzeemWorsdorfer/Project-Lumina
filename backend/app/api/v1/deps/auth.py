@@ -1,9 +1,9 @@
-import os
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+
+from app.core.database import supabase
 
 security = HTTPBearer(auto_error=False)
 
@@ -21,24 +21,22 @@ def get_current_user(
     token = credentials.credentials
 
     try:
-        payload = jwt.get_unverified_claims(token)
-
-        user_id = payload.get("sub")
-        if not user_id:
+        user = supabase.auth.get_user(token)
+        if not user.user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token: missing user ID",
+                detail="Invalid token: no user found",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
         return {
-            "id": user_id,
-            "email": payload.get("email", ""),
+            "id": user.user.id,
+            "email": user.user.email,
         }
 
-    except JWTError as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid token: {str(e)}",
+            detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
