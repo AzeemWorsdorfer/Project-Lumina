@@ -15,7 +15,7 @@ Lumina is an AI-powered study companion that facilitates active learning through
                                ▼
                         ┌─────────────────┐
                         │   Ollama        │
-                        │   (qwen3:8b)    │
+                        │   (qwen3.5:9b)  │
                         └─────────────────┘
 ```
 

@@ -9,7 +9,7 @@ from app.services.reasoning.search_service import get_relevant_chunks
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-AI_MODEL = "qwen3:8b"
+AI_MODEL = "qwen3.5:9b"
 
 ollama_async_client = ollama.AsyncClient()
 
@@ -21,7 +21,7 @@ async def generate_socratic_hint_streaming(
     Generate a Socratic hint based on mind map state and source material.
     Uses async streaming to yield chunks as they're generated.
 
-    Uses a local Ollama model (qwen3:8b) to generate hints by:
+    Uses a local Ollama model (qwen3.5:9b) to generate hints by:
     1. Validating the mind map state
     2. Retrieving relevant context from the knowledge base
     3. Building a Socratic prompt

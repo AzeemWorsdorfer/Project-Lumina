@@ -53,7 +53,7 @@ This project demonstrates full-stack development skills, AI/ML integration, and 
 | Frontend | React 19 + Vite + ReactFlow |
 | Backend | FastAPI (Python 3.13) |
 | Database | Supabase (PostgreSQL + pgvector) |
-| AI | Ollama (qwen3:8b) |
+| AI | Ollama (qwen3.5:9b) |
 
 ## Getting Started
 
@@ -76,7 +76,7 @@ npm run dev
 ### 3. Ollama
 
 ```bash
-ollama pull qwen3:8b
+ollama pull qwen3.5:9b
 ```
 
 ## Project Structure
