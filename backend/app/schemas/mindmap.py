@@ -1,16 +1,40 @@
-from typing import Annotated, Dict, List, Optional
+from typing import Annotated, Dict, List, Literal, Optional
 
 from pydantic import UUID4, BaseModel, BeforeValidator, Field, validator
+
+NodeType = Literal["stickyNote", "textCard"]
+EdgeType = Literal["default", "straight", "step", "smoothstep"]
+
+NODE_COLORS = {
+    "yellow": "#fbbf24",
+    "blue": "#60a5fa",
+    "green": "#4ade80",
+    "pink": "#f472b6",
+    "purple": "#a78bfa",
+    "orange": "#fb923c",
+    "gray": "#94a3b8",
+    "red": "#f87171",
+}
 
 
 class MindMapNode(BaseModel):
     """Single thought/concept in the user's mindmap"""
 
     id: str = Field(..., description="Unique ID from ReactFlow", min_length=1)
-    label: str = Field(..., description="The text inside the node", min_length=1)
-    # Helps the AI find the specific PDF context later.
+    label: str = Field(default="", description="The text inside the node")
+    node_type: NodeType = Field(default="textCard", description="Type of node")
+    color: str = Field(default="#fbbf24", description="Background color of the node")
     related_source_chunk_id: Optional[int] = Field(None, ge=1)
     position: Dict[str, float] = Field(..., description="Node position coordinates")
+    width: Optional[float] = Field(None, description="Node width (auto if None)")
+    height: Optional[float] = Field(None, description="Node height (auto if None)")
+
+    @validator("color")
+    def validate_color(cls, v: str) -> str:
+        """Validate color is a valid hex color."""
+        if not v.startswith("#") or len(v) not in (4, 7):
+            return "#fbbf24"
+        return v.lower()
 
     @validator("position")
     def validate_position(cls, v: Dict[str, float]) -> Dict[str, float]:
@@ -34,6 +58,8 @@ class MindMapEdge(BaseModel):
     source: str = Field(..., description="ID of the 'parent' node", min_length=1)
     target: str = Field(..., description="ID of the 'child' node", min_length=1)
     label: Optional[str] = Field(None, description="Edge label/description")
+    edge_type: EdgeType = Field(default="smoothstep", description="Type of edge")
+    color: str = Field(default="#64748b", description="Edge color")
 
     @validator("source", "target")
     def validate_node_ids(cls, v: str) -> str:

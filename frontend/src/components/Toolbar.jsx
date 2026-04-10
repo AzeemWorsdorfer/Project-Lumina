@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Square, CircleX, Trash2, GitBranch, Lightbulb, Loader2, X, ChevronDown } from "lucide-react";
+import { Square, StickyNote, CircleX, Trash2, GitBranch, Lightbulb, Loader2, X, ChevronDown, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { NODE_COLORS, DEFAULT_NODE_COLOR } from "../utils/mapTransform.js";
+
+const COLOR_NAMES = Object.keys(NODE_COLORS);
 
 const Toolbar = ({ 
   onAddNode, 
@@ -8,27 +11,44 @@ const Toolbar = ({
   onDeleteSelected, 
   nodeCount, 
   selectedNodeCount,
+  selectedEdgeCount = 0,
   onGetHint,
   hints = [],
-  isGeneratingHint = false
+  isGeneratingHint = false,
+  edgeSource = null,
+  onCancelEdge = null
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedHint, setSelectedHint] = useState(null);
+  const [showNodeMenu, setShowNodeMenu] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_NODE_COLOR);
+  const [selectedNodeType, setSelectedNodeType] = useState("textCard");
   const dropdownRef = useRef(null);
+  const nodeMenuRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
       }
+      if (nodeMenuRef.current && !nodeMenuRef.current.contains(event.target)) {
+        setShowNodeMenu(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleAddNode = (type) => {
-    onAddNode(type);
-    toast.success(`Added ${type} node`, { duration: 2000 });
+  const handleAddNode = () => {
+    onAddNode(selectedNodeType, selectedColor);
+    setShowNodeMenu(false);
+    toast.success(`Added ${selectedNodeType === "stickyNote" ? "sticky note" : "text card"}`, { duration: 1500 });
+  };
+
+  const handleQuickAdd = (nodeType) => {
+    onAddNode(nodeType, selectedColor);
+    setShowNodeMenu(false);
+    toast.success(`Added ${nodeType === "stickyNote" ? "sticky note" : "text card"}`, { duration: 1500 });
   };
 
   const handleClearAll = () => {
@@ -48,6 +68,16 @@ const Toolbar = ({
     });
   };
 
+  const handleDeleteSelected = () => {
+    const total = selectedNodeCount + selectedEdgeCount;
+    if (total === 0) {
+      toast.info("Nothing selected");
+      return;
+    }
+    onDeleteSelected();
+    toast.success(`Deleted ${total} item${total > 1 ? "s" : ""}`, { duration: 1500 });
+  };
+
   const handleGetHint = async () => {
     if (nodeCount === 0) {
       toast.error("Add some nodes to the map first");
@@ -60,20 +90,83 @@ const Toolbar = ({
   return (
     <>
       <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2">
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-1.5 flex flex-col gap-1 shadow-xl">
-          <button
-            onClick={() => handleAddNode("default")}
-            className="p-2 bg-slate-700 hover:bg-amber-600 active:bg-amber-500 rounded-md transition-colors group flex items-center justify-center"
-            title="Add Node"
-          >
-            <Square className="w-4 h-4 text-slate-300 group-hover:text-white" />
-          </button>
+        <div className="relative" ref={nodeMenuRef}>
+          <div className="bg-slate-800 border border-slate-700 rounded-lg p-1.5 flex flex-col gap-1 shadow-xl">
+            <button
+              onClick={() => setShowNodeMenu(!showNodeMenu)}
+              className="p-2 bg-slate-700 hover:bg-amber-600 active:bg-amber-500 rounded-md transition-colors group flex items-center justify-center"
+              title="Add Node"
+            >
+              <Plus className="w-4 h-4 text-slate-300 group-hover:text-white" />
+            </button>
+          </div>
+
+          {showNodeMenu && (
+            <div className="absolute right-full mr-2 top-0 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden">
+              <div className="p-3 border-b border-slate-700">
+                <p className="text-xs text-slate-400 uppercase font-medium mb-2">Node Type</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedNodeType("textCard")}
+                    className={`flex-1 p-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
+                      selectedNodeType === "textCard" 
+                        ? "bg-amber-600 text-white" 
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    }`}
+                  >
+                    <Square className="w-3 h-3" />
+                    Card
+                  </button>
+                  <button
+                    onClick={() => setSelectedNodeType("stickyNote")}
+                    className={`flex-1 p-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
+                      selectedNodeType === "stickyNote" 
+                        ? "bg-amber-600 text-white" 
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    }`}
+                  >
+                    <StickyNote className="w-3 h-3" />
+                    Note
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-3 border-b border-slate-700">
+                <p className="text-xs text-slate-400 uppercase font-medium mb-2">Color</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {COLOR_NAMES.map((colorName) => (
+                    <button
+                      key={colorName}
+                      onClick={() => setSelectedColor(NODE_COLORS[colorName])}
+                      className={`w-8 h-8 rounded-md transition-all ${
+                        selectedColor === NODE_COLORS[colorName] 
+                          ? "ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110" 
+                          : "hover:scale-105"
+                      }`}
+                      style={{ backgroundColor: NODE_COLORS[colorName] }}
+                      title={colorName}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-2">
+                <button
+                  onClick={handleAddNode}
+                  className="w-full p-2 bg-amber-600 hover:bg-amber-500 rounded-md transition-colors text-sm font-medium text-white flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add {selectedNodeType === "stickyNote" ? "Note" : "Card"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-2 shadow-xl">
           <button
-            onClick={onDeleteSelected}
-            disabled={selectedNodeCount === 0}
+            onClick={handleDeleteSelected}
+            disabled={selectedNodeCount === 0 && selectedEdgeCount === 0}
             className="p-2 bg-slate-700 hover:bg-red-600 disabled:hover:bg-slate-700 disabled:cursor-not-allowed rounded-md transition-colors group flex items-center justify-center w-full"
             title="Delete Selected"
           >
@@ -163,13 +256,24 @@ const Toolbar = ({
           )}
         </div>
 
-        <div className="bg-slate-800/80 border border-slate-700 rounded-lg p-2 text-xs text-slate-400 text-center shadow-xl">
+        <div className={`bg-slate-800 border rounded-lg p-2 text-xs text-center shadow-xl transition-colors ${
+          edgeSource ? "border-amber-500 text-amber-400" : "border-slate-700 text-slate-400"
+        }`}>
           <div className="flex items-center gap-1 justify-center mb-1">
-            <GitBranch className="w-3 h-3" />
-            <span>Edge</span>
+            <GitBranch className={`w-3 h-3 ${edgeSource ? "text-amber-400" : ""}`} />
+            <span>Connect</span>
           </div>
           <p>Shift + Click</p>
-          <p>two nodes</p>
+          {edgeSource ? (
+            <button 
+              onClick={onCancelEdge}
+              className="mt-1 text-amber-500 hover:text-amber-400 underline"
+            >
+              Cancel
+            </button>
+          ) : (
+            <p>two nodes</p>
+          )}
         </div>
       </div>
 

@@ -1,3 +1,19 @@
+export const NODE_COLORS = {
+  yellow: "#fbbf24",
+  blue: "#60a5fa",
+  green: "#4ade80",
+  pink: "#f472b6",
+  purple: "#a78bfa",
+  orange: "#fb923c",
+  gray: "#94a3b8",
+  red: "#f87171",
+};
+
+export const DEFAULT_NODE_COLOR = "#fbbf24";
+export const DEFAULT_NODE_TYPE = "textCard";
+export const DEFAULT_EDGE_TYPE = "smoothstep";
+export const DEFAULT_EDGE_COLOR = "#64748b";
+
 export const backendToReactFlow = (mindMapData) => {
   if (!mindMapData || !mindMapData.nodes || !mindMapData.edges) {
     return { nodes: [], edges: [] };
@@ -5,11 +21,19 @@ export const backendToReactFlow = (mindMapData) => {
 
   const nodes = mindMapData.nodes.map((node) => ({
     id: node.id,
-    type: node.type || "default",
+    type: node.node_type || "textCard",
     position: node.position,
     data: {
       label: node.label,
+      nodeType: node.node_type || "textCard",
+      color: node.color || DEFAULT_NODE_COLOR,
       related_source_chunk_id: node.related_source_chunk_id || null,
+      width: node.width || null,
+      height: node.height || null,
+    },
+    style: {
+      width: node.width || undefined,
+      height: node.height || undefined,
     },
   }));
 
@@ -18,7 +42,8 @@ export const backendToReactFlow = (mindMapData) => {
     source: edge.source,
     target: edge.target,
     label: edge.label || undefined,
-    type: "default",
+    type: edge.edge_type || "smoothstep",
+    style: { stroke: edge.color || DEFAULT_EDGE_COLOR },
     animated: false,
   }));
 
@@ -30,14 +55,29 @@ export const reactFlowToBackend = (nodes, edges) => {
     nodes: nodes.map((node) => ({
       id: node.id,
       label: node.data?.label || "",
+      node_type: node.data?.nodeType || "textCard",
+      color: node.data?.color || DEFAULT_NODE_COLOR,
       position: node.position,
       related_source_chunk_id: node.data?.related_source_chunk_id || null,
+      width: node.data?.width || null,
+      height: node.data?.height || null,
     })),
     edges: edges.map((edge) => ({
       id: edge.id,
       source: edge.source,
       target: edge.target,
       label: edge.label || null,
+      edge_type: edge.type || "smoothstep",
+      color: edge.style?.stroke || DEFAULT_EDGE_COLOR,
     })),
   };
+};
+
+export const getContrastColor = (hexColor) => {
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? "#1e293b" : "#f8fafc";
 };

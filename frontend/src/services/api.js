@@ -21,6 +21,31 @@ async function authFetch(url, options = {}, token = null) {
   return response;
 }
 
+const DEFAULT_NODE_TYPE = "textCard";
+const DEFAULT_NODE_COLOR = "#fbbf24";
+const DEFAULT_EDGE_TYPE = "smoothstep";
+const DEFAULT_EDGE_COLOR = "#64748b";
+
+const nodeToBackend = (node) => ({
+  id: node.id,
+  label: node.data?.nodeType === "textCard" && !node.data?.label ? "Untitled" : (node.data?.label || ""),
+  node_type: node.data?.nodeType || DEFAULT_NODE_TYPE,
+  color: node.data?.color || DEFAULT_NODE_COLOR,
+  position: node.position,
+  related_source_chunk_id: node.data?.related_source_chunk_id || null,
+  width: node.data?.width || null,
+  height: node.data?.height || null,
+});
+
+const edgeToBackend = (edge) => ({
+  id: edge.id,
+  source: edge.source,
+  target: edge.target,
+  label: edge.label || null,
+  edge_type: edge.type || DEFAULT_EDGE_TYPE,
+  color: edge.style?.stroke || DEFAULT_EDGE_COLOR,
+});
+
 export const fetchSession = async (sessionId, token = null) => {
   const response = await authFetch(
     `${API_BASE_URL}/api/v1/session/${sessionId}`,
@@ -41,19 +66,8 @@ export const fetchPdfUrl = async (sessionId, token = null) => {
 };
 
 export const saveMindMap = async (sessionId, nodes, edges, token = null) => {
-  const backendNodes = nodes.map((node) => ({
-    id: node.id,
-    label: node.data?.label || "",
-    position: node.position,
-    related_source_chunk_id: node.data?.related_source_chunk_id || null,
-  }));
-
-  const backendEdges = edges.map((edge) => ({
-    id: edge.id,
-    source: edge.source,
-    target: edge.target,
-    label: edge.label || null,
-  }));
+  const backendNodes = nodes.map(nodeToBackend);
+  const backendEdges = edges.map(edgeToBackend);
 
   const response = await authFetch(
     `${API_BASE_URL}/api/v1/${sessionId}/map`,
@@ -75,19 +89,8 @@ export const saveMindMap = async (sessionId, nodes, edges, token = null) => {
 };
 
 export const getSocraticHint = async (sessionId, nodes, edges, token = null) => {
-  const backendNodes = nodes.map((node) => ({
-    id: node.id,
-    label: node.data?.label || "",
-    position: node.position,
-    related_source_chunk_id: node.data?.related_source_chunk_id || null,
-  }));
-
-  const backendEdges = edges.map((edge) => ({
-    id: edge.id,
-    source: edge.source,
-    target: edge.target,
-    label: edge.label || null,
-  }));
+  const backendNodes = nodes.map(nodeToBackend);
+  const backendEdges = edges.map(edgeToBackend);
 
   const response = await authFetch(
     `${API_BASE_URL}/api/v1/get-socratic-hint`,
@@ -109,19 +112,8 @@ export const getSocraticHint = async (sessionId, nodes, edges, token = null) => 
 };
 
 export const getSocraticHintStream = async (sessionId, nodes, edges, onChunk, token = null) => {
-  const backendNodes = nodes.map((node) => ({
-    id: node.id,
-    label: node.data?.label || "",
-    position: node.position,
-    related_source_chunk_id: node.data?.related_source_chunk_id || null,
-  }));
-
-  const backendEdges = edges.map((edge) => ({
-    id: edge.id,
-    source: edge.source,
-    target: edge.target,
-    label: edge.label || null,
-  }));
+  const backendNodes = nodes.map(nodeToBackend);
+  const backendEdges = edges.map(edgeToBackend);
 
   const headers = {
     "Content-Type": "application/json",

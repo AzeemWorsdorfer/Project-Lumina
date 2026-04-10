@@ -7,17 +7,18 @@ import {
   useNodesState,
   useEdgesState,
   addEdge,
+  MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { fetchSession, saveMindMap, getSocraticHintStream } from "../services/api.js";
-import { backendToReactFlow } from "../utils/mapTransform.js";
+import { backendToReactFlow, reactFlowToBackend, DEFAULT_NODE_COLOR, DEFAULT_NODE_TYPE, DEFAULT_EDGE_TYPE } from "../utils/mapTransform.js";
 import { toast } from "sonner";
 import { Loader2, Check, AlertCircle } from "lucide-react";
 import Toolbar from "./Toolbar.jsx";
 import EditableNode from "./EditableNode.jsx";
 import { useAuth } from "../contexts/AuthContext";
 
-const nodeTypes = { editableNode: EditableNode };
+const nodeTypes = { textCard: EditableNode, stickyNote: EditableNode };
 const initialNodes = [];
 const initialEdges = [];
 
@@ -90,7 +91,8 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
     
     try {
       const token = await getAccessToken();
-      await saveMindMap(sessionId, currentNodes, currentEdges, token);
+      const backendData = reactFlowToBackend(currentNodes, currentEdges);
+      await saveMindMap(sessionId, backendData.nodes, backendData.edges, token);
       setSaveStatus("saved");
     } catch (error) {
       console.error("Error saving map:", error);
@@ -124,18 +126,37 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   }, [nodes, edges, sessionId, saveMap, hasLoaded]);
 
   const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
+    (params) => {
+      const newEdge = {
+        ...params,
+        type: DEFAULT_EDGE_TYPE,
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 15,
+          height: 15,
+        },
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
+    },
     [setEdges]
   );
 
-  const handleAddNode = useCallback(() => {
+  const handleAddNode = useCallback((nodeType = DEFAULT_NODE_TYPE, color = DEFAULT_NODE_COLOR) => {
     nodeCounter += 1;
     
+    const offsetX = 250 + (nodeCounter * 50) % 200;
+    const offsetY = 250 + (nodeCounter * 50) % 200;
+    
     const newNode = {
-      id: `node-${Date.now()}`,
-      position: { x: 250 + (nodeCounter * 50) % 200, y: 250 + (nodeCounter * 50) % 200 },
-      data: { label: "New Node" },
-      type: "editableNode",
+      id: `node-${Date.now()}-${nodeCounter}`,
+      position: { x: offsetX, y: offsetY },
+      type: nodeType,
+      data: {
+        label: nodeType === "stickyNote" ? "" : "New Card",
+        nodeType: nodeType,
+        color: color,
+        related_source_chunk_id: null,
+      },
     };
     
     setNodes((nds) => [...nds, newNode]);
@@ -157,12 +178,34 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         setEdgeSource(node.id);
         toast.info("Select second node to connect", { duration: 2000 });
       } else if (edgeSource !== node.id) {
-        setEdges((eds) => addEdge({ source: edgeSource, target: node.id }, eds));
+        setEdges((eds) => addEdge({ 
+          source: edgeSource, 
+          target: node.id,
+          type: DEFAULT_EDGE_TYPE,
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 15,
+            height: 15,
+          },
+        }, eds));
         toast.success("Edge created", { duration: 2000 });
         setEdgeSource(null);
       }
     }
   }, [edgeSource, setEdges]);
+
+  const handleEdgeClick = useCallback((event, edge) => {
+    if (event.shiftKey) {
+      const label = prompt("Enter edge label (or leave empty to remove):");
+      if (label !== null) {
+        setEdges((eds) =>
+          eds.map((e) =>
+            e.id === edge.id ? { ...e, label: label || undefined } : e
+          )
+        );
+      }
+    }
+  }, [setEdges]);
 
   const handleGetHint = async () => {
     if (isPlaceholderNode(nodes) || nodes.length === 0) {
@@ -204,6 +247,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   };
 
   const selectedNodeCount = nodes.filter((n) => n.selected).length;
+  const selectedEdgeCount = edges.filter((e) => e.selected).length;
 
   return (
     <div className="h-full w-full bg-slate-900 relative">
@@ -223,13 +267,26 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
+        onEdgeClick={handleEdgeClick}
         nodeTypes={nodeTypes}
         fitView
         colorMode="dark"
         proOptions={{ hideAttribution: true }}
+        defaultEdgeOptions={{
+          type: DEFAULT_EDGE_TYPE,
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 15,
+            height: 15,
+          },
+        }}
       >
         <Controls />
-        <MiniMap zoomable pannable />
+        <MiniMap 
+          zoomable 
+          pannable 
+          nodeColor={(node) => node.data?.color || DEFAULT_NODE_COLOR}
+        />
         <Background variant="dots" gap={12} size={1} color="#334155" />
       </ReactFlow>
       
@@ -239,9 +296,12 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         onDeleteSelected={handleDeleteSelected}
         nodeCount={nodes.length}
         selectedNodeCount={selectedNodeCount}
+        selectedEdgeCount={selectedEdgeCount}
         onGetHint={handleGetHint}
         hints={hints}
         isGeneratingHint={isGeneratingHint}
+        edgeSource={edgeSource}
+        onCancelEdge={() => setEdgeSource(null)}
       />
 
       <div className="absolute bottom-4 right-4 z-20">
