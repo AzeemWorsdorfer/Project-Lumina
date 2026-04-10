@@ -2,7 +2,7 @@
 
 ### AI-Powered Socratic Learning
 
-**Proof of Concept** &nbsp;|&nbsp; [LinkedIn](linkedin.com/in/muhammad-azeem-worsdorfer)
+**Proof of Concept** &nbsp;|&nbsp; [LinkedIn](https://www.linkedin.com/in/muhammad-azeem-worsdorfer)
 
 ---
 
@@ -116,4 +116,4 @@ Lumina/
 
 ## Contact
 
-- [LinkedIn](linkedin.com/in/muhammad-azeem-worsdorfer)
+- [LinkedIn](https://www.linkedin.com/in/muhammad-azeem-worsdorfer)
