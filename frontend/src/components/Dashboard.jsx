@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import MapCanvas from "./MapCanvas";
 import PdfViewer from "./PdfViewer";
+import PomodoroTimer from "./PomodoroTimer";
 import { API_BASE_URL } from "../config.js";
 import { fetchPdfUrl } from "../services/api.js";
 import { toast, Toaster } from "sonner";
@@ -198,11 +199,14 @@ export default function Dashboard() {
         )}
 
         {activeSessionId ? (
-          <MapCanvas 
-            sessionId={activeSessionId} 
-            hints={getHints()}
-            onAddHint={handleAddHint}
-          />
+          <>
+            <MapCanvas 
+              sessionId={activeSessionId} 
+              hints={getHints()}
+              onAddHint={handleAddHint}
+            />
+            <PomodoroTimer />
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-slate-500">
             <div className="p-4 bg-slate-800/50 rounded-full mb-4">
