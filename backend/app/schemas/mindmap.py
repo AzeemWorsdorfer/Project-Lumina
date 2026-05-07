@@ -21,7 +21,7 @@ class MindMapNode(BaseModel):
     """Single thought/concept in the user's mindmap"""
 
     id: str = Field(..., description="Unique ID from ReactFlow", min_length=1)
-    label: str = Field(default="", description="The text inside the node")
+    label: str = Field(..., description="The text inside the node", min_length=1)
     node_type: NodeType = Field(default="textCard", description="Type of node")
     color: str = Field(default="#fbbf24", description="Background color of the node")
     related_source_chunk_id: Optional[int] = Field(None, ge=1)

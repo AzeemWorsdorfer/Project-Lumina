@@ -4,7 +4,7 @@ import { getContrastColor } from "../utils/mapTransform.js";
 
 const EditableNode = ({ id, data, selected }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(data.label);
+  const [value, setValue] = useState(data.label || "");
   const inputRef = useRef(null);
   const { setNodes } = useReactFlow();
 
@@ -21,20 +21,22 @@ const EditableNode = ({ id, data, selected }) => {
 
   const handleDoubleClick = useCallback((e) => {
     e.stopPropagation();
+    setValue(data.label || "");
     setIsEditing(true);
-  }, []);
+  }, [data.label]);
 
   const handleBlur = useCallback(() => {
     setIsEditing(false);
-    const trimmed = value.trim();
-    if (trimmed !== data.label) {
-      setNodes((nds) =>
-        nds.map((node) =>
-          node.id === id ? { ...node, data: { ...node.data, label: trimmed || "Untitled" } } : node
-        )
-      );
-    }
-  }, [value, data.label, id, setNodes]);
+    const trimmed = value.trim() || "Untitled";
+    setValue(trimmed);
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === id
+          ? { ...node, data: { ...node.data, label: trimmed } }
+          : node,
+      ),
+    );
+  }, [value, id, setNodes]);
 
   const handleKeyDown = useCallback(
     (e) => {
@@ -42,22 +44,35 @@ const EditableNode = ({ id, data, selected }) => {
         e.preventDefault();
         handleBlur();
       } else if (e.key === "Escape") {
-        setValue(data.label);
+        setValue(data.label || "");
         setIsEditing(false);
       }
     },
-    [handleBlur, data.label]
+    [handleBlur, data.label],
   );
 
-  const handleChange = useCallback((e) => {
-    setValue(e.target.value);
-  }, []);
+  const handleChange = useCallback(
+    (e) => {
+      const nextValue = e.target.value;
+      setValue(nextValue);
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === id
+            ? { ...node, data: { ...node.data, label: nextValue || "Untitled" } }
+            : node,
+        ),
+      );
+    },
+    [id, setNodes],
+  );
 
   if (nodeType === "stickyNote") {
     return (
       <div
         className={`rounded-lg shadow-lg transition-all duration-200 ${
-          selected ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-900 scale-105" : ""
+          selected
+            ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-900 scale-105"
+            : ""
         }`}
         style={{
           backgroundColor: color,
@@ -71,7 +86,7 @@ const EditableNode = ({ id, data, selected }) => {
         <Handle
           type="target"
           position={Position.Top}
-          className="!bg-slate-600 opacity-0"
+          className="bg-slate-600! opacity-0"
         />
         <div className="p-3 h-full">
           {isEditing ? (
@@ -87,7 +102,7 @@ const EditableNode = ({ id, data, selected }) => {
             />
           ) : (
             <p
-              className="text-sm whitespace-pre-wrap break-words cursor-text"
+              className="text-sm whitespace-pre-wrap wrap-break-words cursor-text"
               style={{ color: textColor }}
             >
               {data.label || "Double-click to edit"}
@@ -97,7 +112,7 @@ const EditableNode = ({ id, data, selected }) => {
         <Handle
           type="source"
           position={Position.Bottom}
-          className="!bg-slate-600 opacity-0"
+          className="bg-slate-600! opacity-0"
         />
       </div>
     );
@@ -118,7 +133,7 @@ const EditableNode = ({ id, data, selected }) => {
       }}
       onDoubleClick={handleDoubleClick}
     >
-      <Handle type="target" position={Position.Top} className="!bg-slate-500" />
+      <Handle type="target" position={Position.Top} className="bg-slate-500!" />
       <div className="text-center">
         {isEditing ? (
           <textarea
@@ -138,7 +153,11 @@ const EditableNode = ({ id, data, selected }) => {
           </p>
         )}
       </div>
-      <Handle type="source" position={Position.Bottom} className="!bg-slate-500" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="bg-slate-500!"
+      />
     </div>
   );
 };
