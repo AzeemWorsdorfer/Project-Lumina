@@ -53,7 +53,7 @@ This project demonstrates full-stack development skills, AI/ML integration, and 
 | Frontend | React 19 + Vite + ReactFlow |
 | Backend | FastAPI (Python 3.13) |
 | Database | Supabase (PostgreSQL + pgvector) |
-| AI | Ollama (qwen3.5:9b) |
+| AI | Ollama (deepseek-r1:8b) |
 
 ## Getting Started
 
@@ -76,7 +76,7 @@ npm run dev
 ### 3. Ollama
 
 ```bash
-ollama pull qwen3.5:9b
+ollama pull deepseek-r1:8b
 ```
 
 ## Project Structure
@@ -109,9 +109,8 @@ Lumina/
 
 ## Future Roadmap
 
-- [ ] Timed Pomodoro Study Sessions
-- [ ] End-of-Session Quizzes
-- [ ] Enhanced Mind Mapping Capabilities
+- [x] Timed Pomodoro Study Sessions
+- [x] Enhanced Mind Mapping Capabilities
 - [ ] Light Mode
 
 ## Contact

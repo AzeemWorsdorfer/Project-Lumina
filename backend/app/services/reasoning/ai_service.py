@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import AsyncGenerator, Dict, List
 
 import ollama
@@ -9,9 +10,14 @@ from app.services.reasoning.search_service import get_relevant_chunks
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-AI_MODEL = "qwen3.5:9b"
+AI_MODEL = "deepseek-r1:8b"
 
 ollama_async_client = ollama.AsyncClient()
+
+
+def _strip_thinking_tags(text: str) -> str:
+    """Remove <think>...</think> tags from DeepSeek R1 responses."""
+    return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
 
 
 async def generate_socratic_hint_streaming(
@@ -21,7 +27,7 @@ async def generate_socratic_hint_streaming(
     Generate a Socratic hint based on mind map state and source material.
     Uses async streaming to yield chunks as they're generated.
 
-    Uses a local Ollama model (qwen3.5:9b) to generate hints by:
+    Uses a local Ollama model (deepseek-r1:8b) to generate hints by:
     1. Validating the mind map state
     2. Retrieving relevant context from the knowledge base
     3. Building a Socratic prompt
@@ -29,7 +35,10 @@ async def generate_socratic_hint_streaming(
     """
     try:
         if not state.nodes:
-            yield "Your map is a blank canvas! What is the central theme of your study material?"
+            yield (
+                "Your map is a blank canvas! What is the central theme "
+                "of your study material?"
+            )
             return
 
         search_query = state.nodes[-1].label
@@ -77,9 +86,34 @@ async def generate_socratic_hint_streaming(
             model=AI_MODEL, messages=[{"role": "user", "content": prompt}], stream=True
         )
 
+        # DeepSeek R1 outputs <think>...</think> before the actual response
+        # Buffer until thinking block closes, then yield response content
+        in_thinking = False
+        buffer = ""
+
         async for chunk in stream:
             content = chunk["message"]["content"]
-            if content:
+            if not content:
+                continue
+
+            buffer += content
+
+            # Check for thinking tag start
+            if "<think>" in buffer:
+                in_thinking = True
+
+            # Check for thinking tag end
+            if in_thinking and "</think>" in buffer:
+                # Remove everything up to and including the closing tag
+                buffer = buffer.split("</think>", 1)[1]
+                in_thinking = False
+                if buffer.strip():
+                    yield buffer
+                buffer = ""
+                continue
+
+            # If not in thinking block, yield content directly
+            if not in_thinking:
                 yield content
 
     except ValueError as e:
@@ -150,9 +184,10 @@ def generate_socratic_hint(state: MindMapState, source_id: str) -> str:
             messages=[{"role": "user", "content": prompt}],
         )
 
-        return (
-            response["message"]["content"] or "I couldn't generate a hint at this time."
-        )
+        content = response["message"]["content"]
+        if not content:
+            content = "I couldn't generate a hint at this time."
+        return _strip_thinking_tags(content)
 
     except ValueError as e:
         logger.warning(f"Invalid input in generate_socratic_hint: {e}")
