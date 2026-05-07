@@ -1,9 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { Square, StickyNote, CircleX, Trash2, GitBranch, Lightbulb, Loader2, X, ChevronDown, Plus } from "lucide-react";
+import { Square, StickyNote, CircleX, Trash2, GitBranch, Lightbulb, Loader2, X, ChevronDown, Plus, Undo2, Redo2 } from "lucide-react";
 import { toast } from "sonner";
 import { NODE_COLORS, DEFAULT_NODE_COLOR } from "../utils/mapTransform.js";
 
 const COLOR_NAMES = Object.keys(NODE_COLORS);
+
+const isMac = typeof navigator !== "undefined"
+  && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+
+const mod = isMac ? "⌘" : "Ctrl";
 
 const Toolbar = ({ 
   onAddNode, 
@@ -16,7 +21,9 @@ const Toolbar = ({
   hints = [],
   isGeneratingHint = false,
   edgeSource = null,
-  onCancelEdge = null
+  onCancelEdge = null,
+  onUndo,
+  onRedo,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedHint, setSelectedHint] = useState(null);
@@ -43,12 +50,6 @@ const Toolbar = ({
     onAddNode(selectedNodeType, selectedColor);
     setShowNodeMenu(false);
     toast.success(`Added ${selectedNodeType === "stickyNote" ? "sticky note" : "text card"}`, { duration: 1500 });
-  };
-
-  const handleQuickAdd = (nodeType) => {
-    onAddNode(nodeType, selectedColor);
-    setShowNodeMenu(false);
-    toast.success(`Added ${nodeType === "stickyNote" ? "sticky note" : "text card"}`, { duration: 1500 });
   };
 
   const handleClearAll = () => {
@@ -90,12 +91,31 @@ const Toolbar = ({
   return (
     <>
       <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2">
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-1.5 shadow-xl">
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={onUndo}
+              className="p-2 bg-slate-700 hover:bg-slate-600 rounded-md transition-colors group flex items-center justify-center"
+              title={`Undo (${mod}+Z)`}
+            >
+              <Undo2 className="w-4 h-4 text-slate-300 group-hover:text-white" />
+            </button>
+            <button
+              onClick={onRedo}
+              className="p-2 bg-slate-700 hover:bg-slate-600 rounded-md transition-colors group flex items-center justify-center"
+              title={`Redo (${mod}+Shift+Z)`}
+            >
+              <Redo2 className="w-4 h-4 text-slate-300 group-hover:text-white" />
+            </button>
+          </div>
+        </div>
+
         <div className="relative" ref={nodeMenuRef}>
           <div className="bg-slate-800 border border-slate-700 rounded-lg p-1.5 flex flex-col gap-1 shadow-xl">
             <button
               onClick={() => setShowNodeMenu(!showNodeMenu)}
               className="p-2 bg-slate-700 hover:bg-amber-600 active:bg-amber-500 rounded-md transition-colors group flex items-center justify-center"
-              title="Add Node"
+              title={`Add Node (Tab=child, Enter=sibling)`}
             >
               <Plus className="w-4 h-4 text-slate-300 group-hover:text-white" />
             </button>
@@ -168,7 +188,7 @@ const Toolbar = ({
             onClick={handleDeleteSelected}
             disabled={selectedNodeCount === 0 && selectedEdgeCount === 0}
             className="p-2 bg-slate-700 hover:bg-red-600 disabled:hover:bg-slate-700 disabled:cursor-not-allowed rounded-md transition-colors group flex items-center justify-center w-full"
-            title="Delete Selected"
+            title={`Delete Selected (Delete/Backspace)`}
           >
             <Trash2 className="w-4 h-4 text-slate-300 group-hover:text-white disabled:group-hover:text-slate-300" />
           </button>
@@ -269,7 +289,7 @@ const Toolbar = ({
               onClick={onCancelEdge}
               className="mt-1 text-amber-500 hover:text-amber-400 underline"
             >
-              Cancel
+              Cancel (Esc)
             </button>
           ) : (
             <p>two nodes</p>
