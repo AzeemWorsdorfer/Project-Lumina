@@ -28,7 +28,7 @@ const DEFAULT_EDGE_COLOR = "#64748b";
 
 const nodeToBackend = (node) => ({
   id: node.id,
-  label: node.data?.nodeType === "textCard" && !node.data?.label ? "Untitled" : (node.data?.label || ""),
+  label: node.data?.label || "Untitled",
   node_type: node.data?.nodeType || DEFAULT_NODE_TYPE,
   color: node.data?.color || DEFAULT_NODE_COLOR,
   position: node.position,

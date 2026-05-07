@@ -11,7 +11,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { fetchSession, saveMindMap, getSocraticHintStream } from "../services/api.js";
-import { backendToReactFlow, reactFlowToBackend, DEFAULT_NODE_COLOR, DEFAULT_NODE_TYPE, DEFAULT_EDGE_TYPE } from "../utils/mapTransform.js";
+import { backendToReactFlow, DEFAULT_NODE_COLOR, DEFAULT_NODE_TYPE, DEFAULT_EDGE_TYPE } from "../utils/mapTransform.js";
 import { toast } from "sonner";
 import { Loader2, Check, AlertCircle } from "lucide-react";
 import Toolbar from "./Toolbar.jsx";
@@ -24,6 +24,16 @@ const initialEdges = [];
 
 const isPlaceholderNode = (nodes) => {
   return nodes.length === 1 && nodes[0]?.data?.label === "Select a Session";
+};
+
+const getDraftKey = (sessionId) => `lumina-mindmap-draft-${sessionId}`;
+
+const parseDraft = (value) => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
 };
 
 let nodeCounter = 0;
@@ -50,15 +60,30 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
       const token = await getAccessToken();
       const session = await fetchSession(id, token);
       
-      if (session.mind_map_data && session.mind_map_data.nodes?.length > 0) {
+      console.log("=== LOAD SESSION ===");
+      console.log("Session data from backend:", JSON.stringify(session.mind_map_data, null, 2));
+      
+      const draft = parseDraft(localStorage.getItem(getDraftKey(id)));
+      const hasDraft = draft?.nodes?.length > 0 || draft?.edges?.length > 0;
+      
+      console.log("Has draft in localStorage:", hasDraft);
+      if (hasDraft) {
+        console.log("Draft nodes:", JSON.stringify(draft.nodes.map(n => ({ id: n.id, label: n.data?.label })), null, 2));
+      }
+
+      if (hasDraft) {
+        setNodes(draft.nodes || initialNodes);
+        setEdges(draft.edges || initialEdges);
+      } else if (session.mind_map_data && session.mind_map_data.nodes?.length > 0) {
         const { nodes: savedNodes, edges: savedEdges } = backendToReactFlow(
           session.mind_map_data
         );
+        console.log("Loaded from backend, nodes:", JSON.stringify(savedNodes.map(n => ({ id: n.id, label: n.data?.label })), null, 2));
         setNodes(savedNodes);
         setEdges(savedEdges);
       } else {
         setNodes(initialNodes);
-        setEdges([]);
+        setEdges(initialEdges);
       }
       setSaveStatus("saved");
     } catch (error) {
@@ -69,7 +94,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         toast.error("Failed to load session data");
       }
       setNodes(initialNodes);
-      setEdges([]);
+      setEdges(initialEdges);
       setSaveStatus("saved");
     } finally {
       setIsLoading(false);
@@ -87,12 +112,16 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
     if (!sessionId || !hasLoaded) return;
     if (currentNodes.length === 0) return;
     
+    console.log("=== SAVE MAP ===");
+    console.log("Nodes being saved:", JSON.stringify(currentNodes.map(n => ({ id: n.id, label: n.data?.label })), null, 2));
+    
     setSaveStatus("saving");
     
     try {
       const token = await getAccessToken();
-      const backendData = reactFlowToBackend(currentNodes, currentEdges);
-      await saveMindMap(sessionId, backendData.nodes, backendData.edges, token);
+      await saveMindMap(sessionId, currentNodes, currentEdges, token);
+      localStorage.removeItem(getDraftKey(sessionId));
+      console.log("=== SAVE SUCCESSFUL ===");
       setSaveStatus("saved");
     } catch (error) {
       console.error("Error saving map:", error);
@@ -109,6 +138,15 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   useEffect(() => {
     if (!sessionId || !hasLoaded) return;
     if (isPlaceholderNode(nodes)) return;
+
+    try {
+      localStorage.setItem(
+        getDraftKey(sessionId),
+        JSON.stringify({ nodes, edges })
+      );
+    } catch (error) {
+      console.warn("Unable to save draft to localStorage:", error);
+    }
     
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
