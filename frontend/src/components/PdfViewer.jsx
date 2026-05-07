@@ -86,7 +86,7 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
   if (isMinimized) {
     return (
       <div
-        className="fixed bottom-4 right-4 z-50 bg-slate-800 border border-slate-700 rounded-lg shadow-lg flex items-center gap-2 px-3 py-2"
+        className="fixed bottom-4 right-4 z-50 glass rounded-lg shadow-lg flex items-center gap-2 px-3 py-2"
       >
         <FileText className="w-4 h-4 text-slate-400" />
         <span className="text-sm text-slate-300">PDF Viewer</span>
@@ -108,7 +108,7 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
 
   return (
     <div
-      className="fixed bg-slate-900 border border-slate-700 rounded-lg shadow-2xl flex flex-col z-50 overflow-hidden"
+      className="fixed glass-strong rounded-lg shadow-2xl flex flex-col z-50 overflow-hidden"
       style={{
         left: position.x,
         top: position.y,
@@ -117,7 +117,7 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
       }}
     >
       <div
-        className="flex items-center justify-between px-3 py-2 bg-slate-800 border-b border-slate-700 cursor-move select-none"
+        className="flex items-center justify-between px-3 py-2 bg-slate-800/40 border-b border-slate-700/30 cursor-move select-none"
         onMouseDown={handleMouseDown}
       >
         <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
       </div>
 
       {numPages && (
-        <div className="flex items-center justify-center gap-4 px-3 py-2 bg-slate-800 border-t border-slate-700">
+        <div className="flex items-center justify-center gap-4 px-3 py-2 bg-slate-800/40 border-t border-slate-700/30">
           <button
             onClick={() => changePage(-1)}
             disabled={pageNumber <= 1}
@@ -178,9 +178,7 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
           >
             <ChevronLeft className="w-4 h-4 text-slate-400" />
           </button>
-          <span className="text-sm text-slate-400">
-            {pageNumber} / {numPages}
-          </span>
+          <span className="text-sm text-slate-400 font-serif">{pageNumber} / {numPages}</span>
           <button
             onClick={() => changePage(1)}
             disabled={pageNumber >= numPages}

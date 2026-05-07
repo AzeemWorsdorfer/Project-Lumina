@@ -166,7 +166,7 @@ export default function PomodoroTimer() {
       <div className="absolute top-4 right-4 z-40">
         <button
           onClick={() => setIsExpanded(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-full text-slate-300 hover:bg-slate-700 transition-all duration-200 shadow-xl"
+          className="flex items-center gap-2 px-4 py-2 glass rounded-full text-slate-300 hover:bg-slate-700/60 transition active:scale-[0.97] duration-150 ease-out-expo shadow-xl"
         >
           <Clock size={18} />
           <span className="text-sm font-medium">Start Focus</span>
@@ -180,7 +180,7 @@ export default function PomodoroTimer() {
       <div className="absolute top-4 right-4 z-40">
         <div
           onClick={skipBreathing}
-          className="w-72 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded-xl shadow-xl p-6 cursor-pointer select-none"
+          className="w-72 glass-strong rounded-xl shadow-xl p-6 cursor-pointer select-none"
         >
           <div className="flex flex-col items-center">
             <p className="text-slate-400 text-sm mb-4">
@@ -190,7 +190,7 @@ export default function PomodoroTimer() {
             <div className="relative w-32 h-32 flex items-center justify-center mb-4">
               <div className="breathing-ring" />
               <div className={`breathing-circle ${getBreathingAnimation()}`} />
-              <span className="absolute text-2xl font-light text-slate-200 z-10">
+              <span className="absolute text-2xl text-slate-200 z-10 font-serif italic">
                 {getBreathingText()}
               </span>
             </div>
@@ -206,7 +206,7 @@ export default function PomodoroTimer() {
 
   if ((isExpanded || isActive) && !isMinimized) {
     return (
-      <div className="absolute top-4 right-4 z-40 w-72 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded-xl shadow-xl">
+      <div className="absolute top-4 right-4 z-40 w-72 glass-strong rounded-xl shadow-xl">
         <div className="p-4 border-b border-slate-700">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -274,11 +274,11 @@ export default function PomodoroTimer() {
                 strokeLinecap="round"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
-                className="text-amber-500 transition-all duration-200"
+                className="text-amber-500 transition-[stroke-dashoffset] duration-300 ease-out-expo"
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-light text-slate-200">
+              <span className="text-2xl text-slate-200 font-serif tracking-tight">
                 {formatTime(timeRemaining)}
               </span>
               {isPaused && (
@@ -324,10 +324,10 @@ export default function PomodoroTimer() {
       <div className="absolute top-4 right-4 z-40">
         <button
           onClick={toggleMinimize}
-          className="flex items-center gap-3 px-4 py-2 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded-full text-slate-300 hover:bg-slate-700 transition-all duration-200 shadow-xl"
+          className="flex items-center gap-3 px-4 py-2 glass rounded-full text-slate-300 hover:bg-slate-700/60 transition active:scale-[0.97] duration-150 ease-out-expo shadow-xl"
         >
           <Clock size={16} className={isBreak ? "text-emerald-400" : "text-amber-500"} />
-          <span className="text-sm font-medium">{formatTime(timeRemaining)}</span>
+          <span className="text-sm font-serif tracking-tight">{formatTime(timeRemaining)}</span>
           <Maximize2 size={14} className="text-slate-500" />
         </button>
       </div>
