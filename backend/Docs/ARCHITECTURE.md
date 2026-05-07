@@ -15,7 +15,7 @@ Lumina is an AI-powered study companion that facilitates active learning through
                                ▼
                         ┌─────────────────┐
                         │   Ollama        │
-                        │   (qwen3.5:9b)  │
+                         │   (deepseek-r1:8b)  │
                         └─────────────────┘
 ```
 
@@ -91,7 +91,7 @@ Mind Map State → Context Retrieval → AI Reasoning → Socratic Hint → User
 
 - **Backend**: FastAPI (Python 3.13) with Pydantic validation
 - **Database**: Supabase (PostgreSQL + pgvector)
-- **AI**: Ollama (qwen3:8b) for local inference
+- **AI**: Ollama (deepseek-r1:8b) for local inference
 - **Processing**: PyMuPDF for PDF extraction, semantic chunking
 - **Frontend**: React 19 + Vite + ReactFlow (@xyflow/react)
 - **Quality**: Ruff linting, pytest testing framework

@@ -6,7 +6,7 @@ FastAPI backend for the Lumina Socratic mind mapping application.
 
 - Python 3.13+
 - [uv](https://github.com/astral-sh/uv) package manager
-- Ollama running locally with `qwen3:8b` model
+- Ollama running locally with `deepseek-r1:8b` model
 - Supabase project (PostgreSQL + pgvector)
 
 ## Setup
@@ -116,9 +116,9 @@ uv run ruff check .
 
 ## AI Models
 
-Uses [Ollama](https://ollama.ai/) with the `qwen3:8b` model for Socratic hint generation.
+Uses [Ollama](https://ollama.ai/) with the `deepseek-r1:8b` model for Socratic hint generation.
 
 Install Ollama and pull the model:
 ```bash
-ollama pull qwen3:8b
+ollama pull deepseek-r1:8b
 ```
