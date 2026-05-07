@@ -80,7 +80,7 @@ const EditableNode = ({ id, data, selected }) => {
   if (nodeType === "stickyNote") {
     return (
       <div
-        className={`rounded-lg shadow-lg transition-all duration-200 ${
+        className={`rounded-lg shadow-lg transition duration-200 ease-out-expo ${
           selected
             ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-900 scale-105"
             : ""
@@ -107,13 +107,13 @@ const EditableNode = ({ id, data, selected }) => {
               onChange={handleChange}
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
-              className="w-full h-full min-h-20 bg-transparent resize-none outline-none text-sm"
+              className="w-full h-full min-h-20 bg-transparent resize-none outline-none text-sm font-serif"
               style={{ color: textColor }}
               placeholder="Type something..."
             />
           ) : (
             <p
-              className="text-sm whitespace-pre-wrap wrap-break-words cursor-text"
+              className="text-sm whitespace-pre-wrap wrap-break-words cursor-text font-serif"
               style={{ color: textColor }}
             >
               {data.label || "Double-click to edit"}
@@ -131,7 +131,7 @@ const EditableNode = ({ id, data, selected }) => {
 
   return (
     <div
-      className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+      className={`px-4 py-3 rounded-lg border-2 transition duration-200 ease-out-expo ${
         selected
           ? "border-amber-400 shadow-lg shadow-amber-500/20"
           : "border-slate-600 hover:border-amber-500/50"
@@ -159,7 +159,7 @@ const EditableNode = ({ id, data, selected }) => {
             placeholder="Enter text..."
           />
         ) : (
-          <p className="text-base font-medium" style={{ color: textColor }}>
+          <p className="text-base font-serif" style={{ color: textColor }}>
             {data.label || "Untitled"}
           </p>
         )}

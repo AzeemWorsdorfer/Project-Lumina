@@ -486,7 +486,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
 
       <div className="absolute bottom-4 right-4 z-20">
         <div
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition duration-150 ease-out-expo ${
             saveStatus === "saved"
               ? "bg-emerald-900/50 text-emerald-400"
               : saveStatus === "saving"

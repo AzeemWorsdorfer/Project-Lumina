@@ -188,11 +188,11 @@ export default function Dashboard() {
         isUploading={isUploading}
       />
 
-      <main className="flex-1 relative h-full transition-all duration-300 ease-in-out">
+      <main className="flex-1 relative h-full transition duration-300 ease-out-expo">
         {!isSidebarOpen && (
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="absolute top-4 left-4 z-50 p-2 bg-slate-800 hover:bg-slate-700 rounded-md border border-slate-700 transition-all"
+            className="absolute top-4 left-4 z-50 p-2 bg-slate-800 hover:bg-slate-700 rounded-md border border-slate-700 transition active:scale-[0.95] duration-150 ease-out-expo"
           >
             <PanelLeftOpen size={20} />
           </button>
@@ -209,13 +209,13 @@ export default function Dashboard() {
           </>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-slate-500">
-            <div className="p-4 bg-slate-800/50 rounded-full mb-4">
+            <div className="p-4 bg-slate-800/30 rounded-full mb-4 backdrop-blur-sm border border-slate-700/20">
               <BookOpen className="w-12 h-12 text-amber-500/30" />
             </div>
-            <p className="text-lg font-light text-slate-500 tracking-wide">
+            <p className="text-lg text-slate-400 font-serif italic tracking-wide">
               Select a session to explore the map
             </p>
-            <p className="text-sm text-slate-600 mt-2">
+            <p className="text-sm text-slate-600 mt-2 font-serif">
               Upload a PDF to create a new study session
             </p>
           </div>

@@ -22,12 +22,12 @@ function App() {
         element={
           <ProtectedRoute>
             <div className="flex flex-col h-screen">
-              <header className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800">
+              <header className="flex items-center justify-between px-4 py-3 bg-slate-900/60 backdrop-blur-md border-b border-slate-700/30">
                 <div className="flex items-center gap-4">
-                  <span className="text-sm text-slate-400">{user?.email}</span>
+                  <span className="text-sm text-slate-400 font-serif">{user?.email}</span>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-300 hover:text-slate-100 hover:bg-slate-800 rounded-md transition-colors"
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-300 hover:text-slate-100 hover:bg-slate-800 rounded-md transition active:scale-[0.97] duration-150 ease-out-expo"
                   >
                     <LogOut size={16} />
                     Sign out

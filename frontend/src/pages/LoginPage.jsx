@@ -32,18 +32,18 @@ export default function LoginPage() {
           <div className="inline-flex p-3 bg-amber-500/10 rounded-2xl mb-4">
             <BookOpen className="w-8 h-8 text-amber-400" />
           </div>
-          <h1 className="text-3xl font-bold text-amber-400 mb-2">Lumina</h1>
-          <p className="text-slate-400">Sign in to your learning journey</p>
+          <h1 className="text-4xl font-bold text-amber-400 mb-2 font-serif tracking-tight">Lumina</h1>
+          <p className="text-slate-400 font-serif italic text-base">Sign in to your learning journey</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-slate-800/80 border border-slate-700/50 rounded-xl p-6 space-y-4 backdrop-blur-sm shadow-xl shadow-slate-900/50">
+        <form onSubmit={handleSubmit} className="glass-strong rounded-xl p-6 space-y-4 shadow-xl shadow-black/20">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition duration-150 ease-out-expo"
               placeholder="you@example.com"
               required
             />
@@ -55,7 +55,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition duration-150 ease-out-expo"
               placeholder="Your password"
               required
             />
@@ -64,7 +64,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 text-white font-medium rounded-lg transition-all shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30"
+            className="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 text-white font-medium rounded-lg transition duration-150 ease-out-expo active:scale-[0.98] shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30"
           >
             {isLoading ? "Signing in..." : "Sign In"}
           </button>

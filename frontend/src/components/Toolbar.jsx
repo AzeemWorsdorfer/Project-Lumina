@@ -91,18 +91,18 @@ const Toolbar = ({
   return (
     <>
       <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2">
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-1.5 shadow-xl">
+        <div className="glass rounded-lg p-1.5 shadow-xl">
           <div className="flex flex-col gap-1">
             <button
               onClick={onUndo}
-              className="p-2 bg-slate-700 hover:bg-slate-600 rounded-md transition-colors group flex items-center justify-center"
+              className="p-2 bg-slate-700 hover:bg-slate-600 rounded-md transition active:scale-[0.95] duration-150 ease-out-expo group flex items-center justify-center"
               title={`Undo (${mod}+Z)`}
             >
               <Undo2 className="w-4 h-4 text-slate-300 group-hover:text-white" />
             </button>
             <button
               onClick={onRedo}
-              className="p-2 bg-slate-700 hover:bg-slate-600 rounded-md transition-colors group flex items-center justify-center"
+              className="p-2 bg-slate-700 hover:bg-slate-600 rounded-md transition active:scale-[0.95] duration-150 ease-out-expo group flex items-center justify-center"
               title={`Redo (${mod}+Shift+Z)`}
             >
               <Redo2 className="w-4 h-4 text-slate-300 group-hover:text-white" />
@@ -111,24 +111,27 @@ const Toolbar = ({
         </div>
 
         <div className="relative" ref={nodeMenuRef}>
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-1.5 flex flex-col gap-1 shadow-xl">
+          <div className="glass rounded-lg p-1.5 flex flex-col gap-1 shadow-xl">
             <button
               onClick={() => setShowNodeMenu(!showNodeMenu)}
-              className="p-2 bg-slate-700 hover:bg-amber-600 active:bg-amber-500 rounded-md transition-colors group flex items-center justify-center"
+              className="p-2 bg-slate-700 hover:bg-amber-600 active:bg-amber-500 rounded-md transition active:scale-[0.95] duration-150 ease-out-expo group flex items-center justify-center"
               title={`Add Node (Tab=child, Enter=sibling)`}
             >
               <Plus className="w-4 h-4 text-slate-300 group-hover:text-white" />
             </button>
           </div>
 
-          {showNodeMenu && (
-            <div className="absolute right-full mr-2 top-0 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden">
-              <div className="p-3 border-b border-slate-700">
+          <div className={`absolute right-full mr-2 top-0 w-56 origin-top-right glass rounded-lg shadow-xl overflow-hidden transition-[opacity,transform] duration-150 ease-out-expo ${
+            showNodeMenu 
+              ? 'opacity-100 scale-100 pointer-events-auto' 
+              : 'opacity-0 scale-95 pointer-events-none'
+          }`}>
+              <div className="p-3 border-b border-slate-700/30">
                 <p className="text-xs text-slate-400 uppercase font-medium mb-2">Node Type</p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedNodeType("textCard")}
-                    className={`flex-1 p-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
+                    className={`flex-1 p-2 rounded-md text-xs font-medium transition active:scale-[0.97] duration-150 ease-out-expo flex items-center justify-center gap-1 ${
                       selectedNodeType === "textCard" 
                         ? "bg-amber-600 text-white" 
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
@@ -139,7 +142,7 @@ const Toolbar = ({
                   </button>
                   <button
                     onClick={() => setSelectedNodeType("stickyNote")}
-                    className={`flex-1 p-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
+                    className={`flex-1 p-2 rounded-md text-xs font-medium transition active:scale-[0.97] duration-150 ease-out-expo flex items-center justify-center gap-1 ${
                       selectedNodeType === "stickyNote" 
                         ? "bg-amber-600 text-white" 
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
@@ -151,14 +154,14 @@ const Toolbar = ({
                 </div>
               </div>
 
-              <div className="p-3 border-b border-slate-700">
+              <div className="p-3 border-b border-slate-700/30">
                 <p className="text-xs text-slate-400 uppercase font-medium mb-2">Color</p>
                 <div className="grid grid-cols-4 gap-2">
                   {COLOR_NAMES.map((colorName) => (
                     <button
                       key={colorName}
                       onClick={() => setSelectedColor(NODE_COLORS[colorName])}
-                      className={`w-8 h-8 rounded-md transition-all ${
+                      className={`w-8 h-8 rounded-md transition active:scale-[0.9] duration-150 ease-out-expo ${
                         selectedColor === NODE_COLORS[colorName] 
                           ? "ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110" 
                           : "hover:scale-105"
@@ -173,31 +176,30 @@ const Toolbar = ({
               <div className="p-2">
                 <button
                   onClick={handleAddNode}
-                  className="w-full p-2 bg-amber-600 hover:bg-amber-500 rounded-md transition-colors text-sm font-medium text-white flex items-center justify-center gap-2"
+                  className="w-full p-2 bg-amber-600 hover:bg-amber-500 rounded-md transition active:scale-[0.97] duration-150 ease-out-expo text-sm font-medium text-white flex items-center justify-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   Add {selectedNodeType === "stickyNote" ? "Note" : "Card"}
                 </button>
               </div>
             </div>
-          )}
         </div>
 
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-2 shadow-xl">
+        <div className="glass rounded-lg p-2 shadow-xl">
           <button
             onClick={handleDeleteSelected}
             disabled={selectedNodeCount === 0 && selectedEdgeCount === 0}
-            className="p-2 bg-slate-700 hover:bg-red-600 disabled:hover:bg-slate-700 disabled:cursor-not-allowed rounded-md transition-colors group flex items-center justify-center w-full"
+            className="p-2 bg-slate-700 hover:bg-red-600 disabled:hover:bg-slate-700 disabled:cursor-not-allowed rounded-md transition active:scale-[0.95] duration-150 ease-out-expo group flex items-center justify-center w-full"
             title={`Delete Selected (Delete/Backspace)`}
           >
             <Trash2 className="w-4 h-4 text-slate-300 group-hover:text-white disabled:group-hover:text-slate-300" />
           </button>
         </div>
 
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-2 shadow-xl">
+        <div className="glass rounded-lg p-2 shadow-xl">
           <button
             onClick={handleClearAll}
-            className="p-2 bg-slate-700 hover:bg-red-600 rounded-md transition-colors group flex items-center justify-center w-full"
+            className="p-2 bg-slate-700 hover:bg-red-600 rounded-md transition active:scale-[0.95] duration-150 ease-out-expo group flex items-center justify-center w-full"
             title="Clear All"
           >
             <CircleX className="w-4 h-4 text-slate-300 group-hover:text-white" />
@@ -205,11 +207,11 @@ const Toolbar = ({
         </div>
 
         <div className="relative" ref={dropdownRef}>
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-1.5 shadow-xl">
+          <div className="glass rounded-lg p-1.5 shadow-xl">
             <button
               onClick={() => setShowDropdown(!showDropdown)}
               disabled={isGeneratingHint}
-              className="p-2 bg-slate-700 hover:bg-amber-600 disabled:bg-amber-800 disabled:cursor-not-allowed rounded-md transition-colors group flex items-center justify-center relative"
+              className="p-2 bg-slate-700 hover:bg-amber-600 disabled:bg-amber-800 disabled:cursor-not-allowed rounded-md transition active:scale-[0.95] duration-150 ease-out-expo group flex items-center justify-center relative"
               title="Get Hint"
             >
               {isGeneratingHint ? (
@@ -226,13 +228,16 @@ const Toolbar = ({
             </button>
           </div>
 
-          {showDropdown && (
-            <div className="absolute right-0 top-full mt-2 w-72 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden">
-              <div className="p-2 border-b border-slate-700">
+          <div className={`absolute right-0 top-full mt-2 w-72 origin-top-right glass rounded-lg shadow-xl overflow-hidden transition-[opacity,transform] duration-150 ease-out-expo ${
+            showDropdown 
+              ? 'opacity-100 scale-100 pointer-events-auto' 
+              : 'opacity-0 scale-95 pointer-events-none'
+          }`}>
+              <div className="p-2 border-b border-slate-700/30">
                 <button
                   onClick={handleGetHint}
                   disabled={isGeneratingHint || nodeCount === 0}
-                  className="w-full p-2 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-md transition-colors text-sm font-medium text-white flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10"
+                  className="w-full p-2 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-md transition active:scale-[0.97] duration-150 ease-out-expo text-sm font-medium text-white flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10"
                 >
                   {isGeneratingHint ? (
                     <>
@@ -258,9 +263,9 @@ const Toolbar = ({
                         setSelectedHint(hint);
                         setShowDropdown(false);
                       }}
-                      className="w-full p-3 text-left hover:bg-slate-700 transition-colors border-b border-slate-700 last:border-0"
+                      className="w-full p-3 text-left hover:bg-slate-700/50 transition active:scale-[0.98] duration-150 ease-out-expo border-b border-slate-700/30 last:border-0"
                     >
-                      <p className="text-sm text-slate-300 line-clamp-2">{hint}</p>
+                      <p className="text-sm text-slate-300 line-clamp-2 font-serif">{hint}</p>
                       <p className="text-xs text-slate-500 mt-1">Hint #{hints.length - index}</p>
                     </button>
                   ))}
@@ -273,11 +278,10 @@ const Toolbar = ({
                 </div>
               )}
             </div>
-          )}
         </div>
 
-        <div className={`bg-slate-800 border rounded-lg p-2 text-xs text-center shadow-xl transition-colors ${
-          edgeSource ? "border-amber-500 text-amber-400" : "border-slate-700 text-slate-400"
+        <div className={`glass rounded-lg p-2 text-xs text-center shadow-xl transition duration-150 ease-out-expo ${
+          edgeSource ? "!border-amber-500 text-amber-400" : "!border-slate-700/30 text-slate-400"
         }`}>
           <div className="flex items-center gap-1 justify-center mb-1">
             <GitBranch className={`w-3 h-3 ${edgeSource ? "text-amber-400" : ""}`} />
@@ -287,7 +291,7 @@ const Toolbar = ({
           {edgeSource ? (
             <button 
               onClick={onCancelEdge}
-              className="mt-1 text-amber-500 hover:text-amber-400 underline"
+              className="mt-1 text-amber-500 hover:text-amber-400 underline transition active:scale-[0.95] duration-150 ease-out-expo"
             >
               Cancel (Esc)
             </button>
@@ -299,21 +303,21 @@ const Toolbar = ({
 
       {selectedHint && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setSelectedHint(null)}>
-          <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+          <div className="glass-strong rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-slate-700/30">
               <div className="flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 text-yellow-400" />
-                <h2 className="font-semibold text-white">Socratic Hint</h2>
+                <h2 className="font-semibold text-white font-serif">Socratic Hint</h2>
               </div>
               <button
                 onClick={() => setSelectedHint(null)}
-                className="p-1 hover:bg-slate-700 rounded-md transition-colors"
+                className="p-1 hover:bg-slate-700/50 rounded-md transition active:scale-[0.9] duration-150 ease-out-expo"
               >
                 <X className="w-5 h-5 text-slate-400" />
               </button>
             </div>
             <div className="p-4 overflow-y-auto max-h-[60vh] custom-scrollbar">
-              <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{selectedHint}</p>
+              <p className="text-slate-200 leading-relaxed whitespace-pre-wrap font-serif">{selectedHint}</p>
             </div>
           </div>
         </div>
