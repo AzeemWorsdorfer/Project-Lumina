@@ -6,11 +6,22 @@ const EditableNode = ({ id, data, selected }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(data.label || "");
   const inputRef = useRef(null);
+  const editRequestRef = useRef(data._editRequest);
   const { setNodes } = useReactFlow();
 
   const nodeType = data.nodeType || "textCard";
   const color = data.color || "#fbbf24";
   const textColor = getContrastColor(color);
+
+  useEffect(() => {
+    if (data._editRequest && data._editRequest !== editRequestRef.current) {
+      editRequestRef.current = data._editRequest;
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setValue(data.label || "");
+      setIsEditing(true);
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+  }, [data._editRequest, data.label]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
