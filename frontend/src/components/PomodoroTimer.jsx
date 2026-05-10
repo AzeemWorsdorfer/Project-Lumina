@@ -166,7 +166,7 @@ export default function PomodoroTimer() {
       <div className="absolute top-4 right-4 z-40">
         <button
           onClick={() => setIsExpanded(true)}
-          className="flex items-center gap-2 px-4 py-2 glass rounded-full text-slate-300 hover:bg-slate-700/60 transition active:scale-[0.97] duration-150 ease-out-expo shadow-xl"
+          className="flex items-center gap-2 px-4 py-2 bg-glass rounded-full text-secondary hover:bg-secondary transition active:scale-[0.97] duration-150 ease-out-expo shadow-theme-xl"
         >
           <Clock size={18} />
           <span className="text-sm font-medium">Start Focus</span>
@@ -180,22 +180,22 @@ export default function PomodoroTimer() {
       <div className="absolute top-4 right-4 z-40">
         <div
           onClick={skipBreathing}
-          className="w-72 glass-strong rounded-xl shadow-xl p-6 cursor-pointer select-none"
+          className="w-72 bg-glass-strong rounded-xl shadow-theme-xl p-6 cursor-pointer select-none"
         >
           <div className="flex flex-col items-center">
-            <p className="text-slate-400 text-sm mb-4">
+            <p className="text-muted text-sm mb-4">
               Tap to skip
             </p>
-            
+
             <div className="relative w-32 h-32 flex items-center justify-center mb-4">
               <div className="breathing-ring" />
               <div className={`breathing-circle ${getBreathingAnimation()}`} />
-              <span className="absolute text-2xl text-slate-200 z-10 font-serif italic">
+              <span className="absolute text-2xl text-primary z-10 font-serif italic">
                 {getBreathingText()}
               </span>
             </div>
-            
-            <p className="text-slate-500 text-sm">
+
+            <p className="text-muted text-sm">
               Round {breathingRound} of {BREATHING_ROUNDS}
             </p>
           </div>
@@ -206,12 +206,12 @@ export default function PomodoroTimer() {
 
   if ((isExpanded || isActive) && !isMinimized) {
     return (
-      <div className="absolute top-4 right-4 z-40 w-72 glass-strong rounded-xl shadow-xl">
-        <div className="p-4 border-b border-slate-700">
+      <div className="absolute top-4 right-4 z-40 w-72 bg-glass-strong rounded-xl shadow-theme-xl">
+        <div className="p-4 border-b border-default">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Clock size={18} className="text-amber-500" />
-              <span className="font-medium text-slate-200">
+              <Clock size={18} className="text-accent" />
+              <span className="font-medium text-primary">
                 {isBreak ? "Break" : "Focus"}
               </span>
             </div>
@@ -219,14 +219,16 @@ export default function PomodoroTimer() {
               {(state === "session" || state === "break") && (
                 <button
                   onClick={toggleMinimize}
-                  className="p-1 text-slate-400 hover:text-slate-200 transition-colors"
+                  className="p-1 text-muted hover:text-primary transition-colors"
+                  aria-label="Minimize timer"
                 >
                   <Minimize2 size={16} />
                 </button>
               )}
               <button
                 onClick={reset}
-                className="p-1 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-1 text-muted hover:text-primary transition-colors"
+                aria-label="Close timer"
               >
                 <X size={18} />
               </button>
@@ -237,7 +239,7 @@ export default function PomodoroTimer() {
               value={presetIndex}
               onChange={(e) => handlePresetChange(Number(e.target.value))}
               disabled={state !== "idle"}
-              className="w-full px-3 py-1.5 bg-slate-900 border border-slate-600 rounded-md text-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent appearance-none cursor-pointer disabled:opacity-50"
+              className="w-full px-3 py-1.5 bg-primary border border-default rounded-md text-secondary text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent appearance-none cursor-pointer disabled:opacity-50"
             >
               {PRESETS.map((preset, index) => (
                 <option key={preset.name} value={index}>
@@ -247,7 +249,7 @@ export default function PomodoroTimer() {
             </select>
             <ChevronDown
               size={14}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
             />
           </div>
         </div>
@@ -262,7 +264,7 @@ export default function PomodoroTimer() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="6"
-                className="text-slate-700"
+                className="text-muted/30"
               />
               <circle
                 cx="64"
@@ -274,15 +276,15 @@ export default function PomodoroTimer() {
                 strokeLinecap="round"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
-                className="text-amber-500 transition-[stroke-dashoffset] duration-300 ease-out-expo"
+                className="text-accent transition-[stroke-dashoffset] duration-300 ease-out-expo"
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl text-slate-200 font-serif tracking-tight">
+              <span className="text-2xl text-primary font-serif tracking-tight">
                 {formatTime(timeRemaining)}
               </span>
               {isPaused && (
-                <span className="text-xs text-slate-500 mt-1">Paused</span>
+                <span className="text-xs text-muted mt-1">Paused</span>
               )}
             </div>
           </div>
@@ -291,7 +293,7 @@ export default function PomodoroTimer() {
             {state === "idle" && (
               <button
                 onClick={startBreathing}
-                className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover text-on-accent rounded-lg transition-colors"
               >
                 <Play size={18} />
                 <span>Start</span>
@@ -301,13 +303,15 @@ export default function PomodoroTimer() {
               <>
                 <button
                   onClick={togglePause}
-                  className="p-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors"
+                  className="p-2 bg-elevated hover:bg-secondary text-secondary rounded-lg transition-colors"
+                  aria-label={isPaused ? "Resume timer" : "Pause timer"}
                 >
                   {isPaused ? <Play size={20} /> : <Pause size={20} />}
                 </button>
                 <button
                   onClick={reset}
-                  className="p-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors"
+                  className="p-2 bg-elevated hover:bg-secondary text-secondary rounded-lg transition-colors"
+                  aria-label="Reset timer"
                 >
                   <RotateCcw size={20} />
                 </button>
@@ -324,11 +328,11 @@ export default function PomodoroTimer() {
       <div className="absolute top-4 right-4 z-40">
         <button
           onClick={toggleMinimize}
-          className="flex items-center gap-3 px-4 py-2 glass rounded-full text-slate-300 hover:bg-slate-700/60 transition active:scale-[0.97] duration-150 ease-out-expo shadow-xl"
+          className="flex items-center gap-3 px-4 py-2 bg-glass rounded-full text-secondary hover:bg-secondary transition active:scale-[0.97] duration-150 ease-out-expo shadow-theme-xl"
         >
-          <Clock size={16} className={isBreak ? "text-emerald-400" : "text-amber-500"} />
+          <Clock size={16} className={isBreak ? "text-success" : "text-accent"} />
           <span className="text-sm font-serif tracking-tight">{formatTime(timeRemaining)}</span>
-          <Maximize2 size={14} className="text-slate-500" />
+          <Maximize2 size={14} className="text-muted" />
         </button>
       </div>
     );

@@ -111,7 +111,7 @@ Lumina/
 
 - [x] Timed Pomodoro Study Sessions
 - [x] Enhanced Mind Mapping Capabilities
-- [ ] Light Mode
+- [x] Light Mode
 
 ## Contact
 

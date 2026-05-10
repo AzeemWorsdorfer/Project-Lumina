@@ -26,36 +26,38 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{background: 'var(--bg-gradient)'}}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex p-3 bg-amber-500/10 rounded-2xl mb-4">
-            <BookOpen className="w-8 h-8 text-amber-400" />
+          <div className="inline-flex p-3 bg-accent-light rounded-2xl mb-4">
+            <BookOpen className="w-8 h-8 text-accent" />
           </div>
-          <h1 className="text-4xl font-bold text-amber-400 mb-2 font-serif tracking-tight">Lumina</h1>
-          <p className="text-slate-400 font-serif italic text-base">Sign in to your learning journey</p>
+          <h1 className="text-4xl font-bold text-accent mb-2 font-serif tracking-tight">Lumina</h1>
+          <p className="text-secondary font-serif italic text-base">Sign in to your learning journey</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="glass-strong rounded-xl p-6 space-y-4 shadow-xl shadow-black/20">
+        <form onSubmit={handleSubmit} className="bg-glass-strong rounded-xl p-6 space-y-4 shadow-theme-xl">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+            <label htmlFor="login-email" className="block text-sm font-medium text-secondary mb-1">Email</label>
             <input
+              id="login-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition duration-150 ease-out-expo"
+              className="w-full px-4 py-2 bg-primary border border-default rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition duration-150 ease-out-expo"
               placeholder="you@example.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
+            <label htmlFor="login-password" className="block text-sm font-medium text-secondary mb-1">Password</label>
             <input
+              id="login-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition duration-150 ease-out-expo"
+              className="w-full px-4 py-2 bg-primary border border-default rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition duration-150 ease-out-expo"
               placeholder="Your password"
               required
             />
@@ -64,15 +66,15 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 text-white font-medium rounded-lg transition duration-150 ease-out-expo active:scale-[0.98] shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30"
+            className="w-full py-2.5 px-4 bg-accent hover:bg-accent-hover disabled:opacity-50 text-on-accent font-medium rounded-lg transition duration-150 ease-out-expo active:scale-[0.98] shadow-theme-lg"
           >
             {isLoading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
-        <p className="text-center text-slate-400 mt-6">
+        <p className="text-center text-muted mt-6">
           Don't have an account?{" "}
-          <Link to="/signup" className="text-amber-400 hover:text-amber-300 transition-colors">
+          <Link to="/signup" className="text-accent hover:text-accent-hover transition-colors">
             Sign up
           </Link>
         </p>

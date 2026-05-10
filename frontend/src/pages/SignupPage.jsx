@@ -14,7 +14,7 @@ export default function SignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       toast.error("Passwords don't match");
       return;
@@ -38,48 +38,51 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{background: 'var(--bg-gradient)'}}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex p-3 bg-amber-500/10 rounded-2xl mb-4">
-            <BookOpen className="w-8 h-8 text-amber-400" />
+          <div className="inline-flex p-3 bg-accent-light rounded-2xl mb-4">
+            <BookOpen className="w-8 h-8 text-accent" />
           </div>
-          <h1 className="text-4xl font-bold text-amber-400 mb-2 font-serif tracking-tight">Lumina</h1>
-          <p className="text-slate-400 font-serif italic text-base">Create your account</p>
+          <h1 className="text-4xl font-bold text-accent mb-2 font-serif tracking-tight">Lumina</h1>
+          <p className="text-secondary font-serif italic text-base">Create your account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="glass-strong rounded-xl p-6 space-y-4 shadow-xl shadow-black/20">
+        <form onSubmit={handleSubmit} className="bg-glass-strong rounded-xl p-6 space-y-4 shadow-theme-xl">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+            <label htmlFor="signup-email" className="block text-sm font-medium text-secondary mb-1">Email</label>
             <input
+              id="signup-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition duration-150 ease-out-expo"
+              className="w-full px-4 py-2 bg-primary border border-default rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition duration-150 ease-out-expo"
               placeholder="you@example.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
+            <label htmlFor="signup-password" className="block text-sm font-medium text-secondary mb-1">Password</label>
             <input
+              id="signup-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition duration-150 ease-out-expo"
+              className="w-full px-4 py-2 bg-primary border border-default rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition duration-150 ease-out-expo"
               placeholder="At least 6 characters"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Confirm Password</label>
+            <label htmlFor="signup-confirm" className="block text-sm font-medium text-secondary mb-1">Confirm Password</label>
             <input
+              id="signup-confirm"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition duration-150 ease-out-expo"
+              className="w-full px-4 py-2 bg-primary border border-default rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition duration-150 ease-out-expo"
               placeholder="Confirm your password"
               required
             />
@@ -88,15 +91,15 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 text-white font-medium rounded-lg transition duration-150 ease-out-expo active:scale-[0.98] shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30"
+            className="w-full py-2.5 px-4 bg-accent hover:bg-accent-hover disabled:opacity-50 text-on-accent font-medium rounded-lg transition duration-150 ease-out-expo active:scale-[0.98] shadow-theme-lg"
           >
             {isLoading ? "Creating account..." : "Create Account"}
           </button>
         </form>
 
-        <p className="text-center text-slate-400 mt-6">
+        <p className="text-center text-muted mt-6">
           Already have an account?{" "}
-          <Link to="/login" className="text-amber-400 hover:text-amber-300 transition-colors">
+          <Link to="/login" className="text-accent hover:text-accent-hover transition-colors">
             Sign in
           </Link>
         </p>

@@ -54,6 +54,7 @@ npm run lint                      # ESLint
 - **Services split**: `services/ingestion/` (PDF pipeline), `services/reasoning/` (AI/Socratic)
 - **Database schema**: `document_sections` table stores 1536-dim embeddings for vector search
 - **Frontend config**: API base URL hardcoded in `frontend/src/config.js` (points to `127.0.0.1:8000`)
+- **Theme system**: `ThemeContext` toggles `.dark` class on `<html>`. CSS variables in `:root`/`.dark` control colors via semantic `@utility` classes (`bg-primary`, `text-secondary`, `border-default`). See `frontend/README.md` for usage.
 
 ## Testing
 
