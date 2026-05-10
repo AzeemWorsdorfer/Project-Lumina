@@ -16,10 +16,8 @@ const EditableNode = ({ id, data, selected }) => {
   useEffect(() => {
     if (data._editRequest && data._editRequest !== editRequestRef.current) {
       editRequestRef.current = data._editRequest;
-      /* eslint-disable react-hooks/set-state-in-effect */
       setValue(data.label || "");
       setIsEditing(true);
-      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [data._editRequest, data.label]);
 
@@ -82,7 +80,7 @@ const EditableNode = ({ id, data, selected }) => {
       <div
         className={`rounded-lg shadow-lg transition duration-200 ease-out-expo ${
           selected
-            ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-900 scale-105"
+            ? "ring-2 ring-accent ring-offset-2 scale-105"
             : ""
         }`}
         style={{
@@ -97,7 +95,7 @@ const EditableNode = ({ id, data, selected }) => {
         <Handle
           type="target"
           position={Position.Top}
-          className="bg-slate-600! opacity-0"
+          className="!opacity-0"
         />
         <div className="p-3 h-full">
           {isEditing ? (
@@ -123,7 +121,7 @@ const EditableNode = ({ id, data, selected }) => {
         <Handle
           type="source"
           position={Position.Bottom}
-          className="bg-slate-600! opacity-0"
+          className="!opacity-0"
         />
       </div>
     );
@@ -133,8 +131,8 @@ const EditableNode = ({ id, data, selected }) => {
     <div
       className={`px-4 py-3 rounded-lg border-2 transition duration-200 ease-out-expo ${
         selected
-          ? "border-amber-400 shadow-lg shadow-amber-500/20"
-          : "border-slate-600 hover:border-amber-500/50"
+          ? "border-accent shadow-lg"
+          : "border-default hover:border-accent/50"
       }`}
       style={{
         backgroundColor: color,
@@ -144,7 +142,7 @@ const EditableNode = ({ id, data, selected }) => {
       }}
       onDoubleClick={handleDoubleClick}
     >
-      <Handle type="target" position={Position.Top} className="bg-slate-500!" />
+      <Handle type="target" position={Position.Top} style={{ backgroundColor: "var(--text-muted)" }} />
       <div className="text-center">
         {isEditing ? (
           <textarea
@@ -153,7 +151,7 @@ const EditableNode = ({ id, data, selected }) => {
             onChange={handleChange}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
-            className="w-full bg-transparent text-base text-center outline-none resize-none border-b-2 border-amber-400 min-h-8"
+            className="w-full bg-transparent text-base text-center outline-none resize-none border-b-2 border-accent min-h-8"
             style={{ color: textColor }}
             rows={2}
             placeholder="Enter text..."
@@ -167,7 +165,7 @@ const EditableNode = ({ id, data, selected }) => {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="bg-slate-500!"
+        style={{ backgroundColor: "var(--text-muted)" }}
       />
     </div>
   );

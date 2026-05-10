@@ -17,6 +17,7 @@ import { Loader2, Check, AlertCircle } from "lucide-react";
 import Toolbar from "./Toolbar.jsx";
 import EditableNode from "./EditableNode.jsx";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import useKeyboardShortcuts from "../hooks/useKeyboardShortcuts.js";
 
 const nodeTypes = { textCard: EditableNode, stickyNote: EditableNode };
@@ -41,6 +42,7 @@ let nodeCounter = 0;
 
 const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   const { getAccessToken } = useAuth();
+  const { theme } = useTheme();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [isLoading, setIsLoading] = useState(false);
@@ -91,25 +93,17 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
 
   const loadSession = useCallback(async (id) => {
     if (!id) return;
-    
+
     setIsLoading(true);
     setSaveStatus("saved");
     setHasLoaded(false);
-    
+
     try {
       const token = await getAccessToken();
       const session = await fetchSession(id, token);
-      
-      console.log("=== LOAD SESSION ===");
-      console.log("Session data from backend:", JSON.stringify(session.mind_map_data, null, 2));
-      
+
       const draft = parseDraft(localStorage.getItem(getDraftKey(id)));
       const hasDraft = draft?.nodes?.length > 0 || draft?.edges?.length > 0;
-      
-      console.log("Has draft in localStorage:", hasDraft);
-      if (hasDraft) {
-        console.log("Draft nodes:", JSON.stringify(draft.nodes.map(n => ({ id: n.id, label: n.data?.label })), null, 2));
-      }
 
       if (hasDraft) {
         setNodes(draft.nodes || initialNodes);
@@ -118,7 +112,6 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         const { nodes: savedNodes, edges: savedEdges } = backendToReactFlow(
           session.mind_map_data
         );
-        console.log("Loaded from backend, nodes:", JSON.stringify(savedNodes.map(n => ({ id: n.id, label: n.data?.label })), null, 2));
         setNodes(savedNodes);
         setEdges(savedEdges);
       } else {
@@ -151,17 +144,13 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   const saveMap = useCallback(async (currentNodes, currentEdges) => {
     if (!sessionId || !hasLoaded) return;
     if (currentNodes.length === 0) return;
-    
-    console.log("=== SAVE MAP ===");
-    console.log("Nodes being saved:", JSON.stringify(currentNodes.map(n => ({ id: n.id, label: n.data?.label })), null, 2));
-    
+
     setSaveStatus("saving");
-    
+
     try {
       const token = await getAccessToken();
       await saveMindMap(sessionId, currentNodes, currentEdges, token);
       localStorage.removeItem(getDraftKey(sessionId));
-      console.log("=== SAVE SUCCESSFUL ===");
       setSaveStatus("saved");
     } catch (error) {
       console.error("Error saving map:", error);
@@ -187,15 +176,15 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
     } catch (error) {
       console.warn("Unable to save draft to localStorage:", error);
     }
-    
+
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
-    
+
     debounceRef.current = setTimeout(() => {
       saveMap(nodes, edges);
     }, 500);
-    
+
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
@@ -205,10 +194,10 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
 
   const handleAddNode = useCallback((nodeType = DEFAULT_NODE_TYPE, color = DEFAULT_NODE_COLOR) => {
     nodeCounter += 1;
-    
+
     const offsetX = 250 + (nodeCounter * 50) % 200;
     const offsetY = 250 + (nodeCounter * 50) % 200;
-    
+
     const newNode = {
       id: `node-${Date.now()}-${nodeCounter}`,
       position: { x: offsetX, y: offsetY },
@@ -220,7 +209,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         related_source_chunk_id: null,
       },
     };
-    
+
     takeSnapshot();
     setNodes((nds) => [...nds, newNode]);
   }, [setNodes, takeSnapshot]);
@@ -344,8 +333,8 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         toast.info("Select second node to connect", { duration: 2000 });
       } else if (edgeSource !== node.id) {
         takeSnapshot();
-        setEdges((eds) => addEdge({ 
-          source: edgeSource, 
+        setEdges((eds) => addEdge({
+          source: edgeSource,
           target: node.id,
           type: DEFAULT_EDGE_TYPE,
           markerEnd: {
@@ -379,9 +368,9 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
       toast.error("Add some nodes to the map first");
       return;
     }
-    
+
     setIsGeneratingHint(true);
-    
+
     try {
       const token = await getAccessToken();
       let fullHint = "";
@@ -427,13 +416,15 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   const selectedNodeCount = nodes.filter((n) => n.selected).length;
   const selectedEdgeCount = edges.filter((e) => e.selected).length;
 
+  const bgColor = theme === "dark" ? "#1e293b" : "#334155";
+
   return (
-    <div className="h-full w-full bg-slate-900 relative">
+    <div className="h-full w-full bg-primary relative">
       {isLoading && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/80">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-primary/80">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
-            <p className="text-slate-400 text-sm">Loading session...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-accent" />
+            <p className="text-secondary text-sm">Loading session...</p>
           </div>
         </div>
       )}
@@ -448,7 +439,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         onEdgeClick={handleEdgeClick}
         nodeTypes={nodeTypes}
         fitView
-        colorMode="dark"
+        colorMode={theme}
         proOptions={{ hideAttribution: true }}
         defaultEdgeOptions={{
           type: DEFAULT_EDGE_TYPE,
@@ -460,16 +451,16 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         }}
       >
         <Controls />
-        <MiniMap 
-          zoomable 
-          pannable 
+        <MiniMap
+          zoomable
+          pannable
           nodeColor={(node) => node.data?.color || DEFAULT_NODE_COLOR}
         />
-        <Background variant="dots" gap={12} size={1} color="#334155" />
+        <Background variant="dots" gap={12} size={1} color={bgColor} />
       </ReactFlow>
-      
-      <Toolbar 
-        onAddNode={handleAddNode} 
+
+      <Toolbar
+        onAddNode={handleAddNode}
         onClearAll={handleClearAll}
         onDeleteSelected={handleDeleteSelected}
         nodeCount={nodes.length}
@@ -488,16 +479,16 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         <div
           className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition duration-150 ease-out-expo ${
             saveStatus === "saved"
-              ? "bg-emerald-900/50 text-emerald-400"
+              ? "bg-success-subtle text-success"
               : saveStatus === "saving"
-              ? "bg-amber-900/50 text-amber-400"
-              : "bg-red-900/50 text-red-400"
+              ? "bg-accent-subtle text-accent"
+              : "bg-destructive-subtle text-destructive"
           }`}
         >
           {saveStatus === "saved" && <Check className="w-3 h-3" />}
           {saveStatus === "saving" && <Loader2 className="w-3 h-3 animate-spin" />}
           {saveStatus === "error" && (
-            <button onClick={retrySave} className="hover:underline flex items-center gap-1">
+            <button onClick={retrySave} className="hover:underline flex items-center gap-1" aria-label="Retry save">
               <AlertCircle className="w-3 h-3" />
               Retry
             </button>

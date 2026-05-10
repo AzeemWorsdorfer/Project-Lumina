@@ -9,6 +9,17 @@ export const NODE_COLORS = {
   red: "#f87171",
 };
 
+export const NODE_COLORS_LIGHT = {
+  yellow: "#eab308",
+  blue: "#3b82f6",
+  green: "#22c55e",
+  pink: "#db2777",
+  purple: "#7c3aed",
+  orange: "#ea580c",
+  gray: "#64748b",
+  red: "#dc2626",
+};
+
 export const DEFAULT_NODE_COLOR = "#fbbf24";
 export const DEFAULT_NODE_TYPE = "textCard";
 export const DEFAULT_EDGE_TYPE = "smoothstep";
@@ -79,5 +90,5 @@ export const getContrastColor = (hexColor) => {
   const g = parseInt(hex.substr(2, 2), 16);
   const b = parseInt(hex.substr(4, 2), 16);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? "#1e293b" : "#f8fafc";
+  return luminance > 0.5 ? "#0f172a" : "#ffffff";
 };

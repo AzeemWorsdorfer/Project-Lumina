@@ -10,19 +10,197 @@
 :root {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --bg-elevated: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.7);
+  --bg-glass-strong: rgba(255, 255, 255, 0.85);
+  --bg-glass-card: rgba(255, 255, 255, 0.6);
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-on-accent: #ffffff;
+
+  --accent: #d97706;
+  --accent-hover: #b45309;
+  --accent-light: #fef3c7;
+  --accent-subtle: rgba(217, 119, 6, 0.1);
+
+  --destructive: #dc2626;
+  --success: #16a34a;
+
+  --border: #e2e8f0;
+  --border-light: rgba(0, 0, 0, 0.06);
+
+  --selection-bg: rgba(217, 119, 6, 0.2);
+  --selection-text: #451a03;
+  --scrollbar-track: #e2e8f0;
+  --scrollbar-thumb: #94a3b8;
+  --scrollbar-thumb-hover: #64748b;
+  --autofill-bg: #fef3c7;
+  --autofill-text: #0f172a;
+  --overlay: rgba(0, 0, 0, 0.5);
+
+  --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 60%, #e2e8f0 100%);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+}
+
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-elevated: #1e293b;
+  --bg-glass: rgba(30, 41, 59, 0.6);
+  --bg-glass-strong: rgba(30, 41, 59, 0.75);
+  --bg-glass-card: rgba(30, 41, 59, 0.5);
+
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-on-accent: #ffffff;
+
+  --accent: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-light: rgba(251, 191, 36, 0.1);
+  --accent-subtle: rgba(251, 191, 36, 0.1);
+
+  --destructive: #ef4444;
+  --success: #22c55e;
+
+  --border: #334155;
+  --border-light: rgba(148, 163, 184, 0.08);
+
+  --selection-bg: rgba(245, 158, 11, 0.3);
+  --selection-text: #fef3c7;
+  --scrollbar-track: #1e293b;
+  --scrollbar-thumb: #475569;
+  --scrollbar-thumb-hover: #64748b;
+  --autofill-bg: #1e293b;
+  --autofill-text: #e2e8f0;
+  --overlay: rgba(0, 0, 0, 0.6);
+
+  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #0f172a 60%, #1a1f35 100%);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 30px rgba(0, 0, 0, 0.6);
+}
+
+@utility bg-primary {
+  background-color: var(--bg-primary);
+}
+@utility bg-secondary {
+  background-color: var(--bg-secondary);
+}
+@utility bg-elevated {
+  background-color: var(--bg-elevated);
+}
+@utility bg-glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-light);
+}
+@utility bg-glass-strong {
+  background: var(--bg-glass-strong);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-light);
+}
+@utility bg-glass-card {
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-light);
+}
+@utility text-primary {
+  color: var(--text-primary);
+}
+@utility text-secondary {
+  color: var(--text-secondary);
+}
+@utility text-muted {
+  color: var(--text-muted);
+}
+@utility text-accent {
+  color: var(--accent);
+}
+@utility text-on-accent {
+  color: var(--text-on-accent);
+}
+@utility text-destructive {
+  color: var(--destructive);
+}
+@utility text-success {
+  color: var(--success);
+}
+@utility bg-accent {
+  background-color: var(--accent);
+}
+@utility bg-accent-hover {
+  background-color: var(--accent-hover);
+}
+@utility bg-accent-light {
+  background-color: var(--accent-light);
+}
+@utility bg-destructive {
+  background-color: var(--destructive);
+}
+@utility bg-success {
+  background-color: var(--success);
+}
+@utility border-default {
+  border-color: var(--border);
+}
+@utility border-accent {
+  border-color: var(--accent);
+}
+@utility shadow-theme-sm {
+  box-shadow: var(--shadow-sm);
+}
+@utility shadow-theme-md {
+  box-shadow: var(--shadow-md);
+}
+@utility shadow-theme-lg {
+  box-shadow: var(--shadow-lg);
+}
+@utility shadow-theme-xl {
+  box-shadow: var(--shadow-xl);
+}
+@utility bg-overlay {
+  background-color: var(--overlay);
+}
+@utility bg-accent-subtle {
+  background-color: var(--accent-subtle);
+}
+@utility bg-destructive-subtle {
+  background-color: color-mix(in srgb, var(--destructive) 10%, transparent);
+}
+@utility bg-success-subtle {
+  background-color: color-mix(in srgb, var(--success) 10%, transparent);
 }
 
 body {
-  background: linear-gradient(135deg, #0f172a 0%, #0f172a 60%, #1a1f35 100%);
-  color: #e2e8f0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dark body {
+  background: linear-gradient(135deg, #0f172a 0%, #0f172a 60%, #1a1f35 100%);
+}
+
 ::selection {
-  background-color: rgba(245, 158, 11, 0.3);
-  color: #fef3c7;
+  background-color: var(--selection-bg);
+  color: var(--selection-text);
 }
 
 ::-webkit-scrollbar {
@@ -31,16 +209,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: var(--scrollbar-thumb-hover);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -52,15 +230,15 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: var(--scrollbar-thumb);
   border-radius: 2px;
 }
 
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px #1e293b inset;
-  -webkit-text-fill-color: #e2e8f0;
+  -webkit-box-shadow: 0 0 0px 1000px var(--autofill-bg) inset;
+  -webkit-text-fill-color: var(--autofill-text);
   transition: background-color 5000s ease-in-out 0s;
 }
 
@@ -88,7 +266,7 @@ input:-webkit-autofill:focus {
   inset: 0;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, rgba(251, 191, 36, 0.4), rgba(251, 191, 36, 0.1));
-  box-shadow: 
+  box-shadow:
     0 0 20px rgba(251, 191, 36, 0.3),
     0 0 40px rgba(251, 191, 36, 0.1),
     inset 0 0 20px rgba(251, 191, 36, 0.2);
@@ -109,14 +287,14 @@ input:-webkit-autofill:focus {
 @keyframes inhale {
   0% {
     transform: scale(0.4);
-    box-shadow: 
+    box-shadow:
       0 0 10px rgba(251, 191, 36, 0.2),
       0 0 20px rgba(251, 191, 36, 0.1),
       inset 0 0 10px rgba(251, 191, 36, 0.1);
   }
   100% {
     transform: scale(1);
-    box-shadow: 
+    box-shadow:
       0 0 30px rgba(251, 191, 36, 0.4),
       0 0 60px rgba(251, 191, 36, 0.2),
       inset 0 0 30px rgba(251, 191, 36, 0.3);
@@ -126,14 +304,14 @@ input:-webkit-autofill:focus {
 @keyframes exhale {
   0% {
     transform: scale(1);
-    box-shadow: 
+    box-shadow:
       0 0 30px rgba(251, 191, 36, 0.4),
       0 0 60px rgba(251, 191, 36, 0.2),
       inset 0 0 30px rgba(251, 191, 36, 0.3);
   }
   100% {
     transform: scale(0.4);
-    box-shadow: 
+    box-shadow:
       0 0 10px rgba(251, 191, 36, 0.2),
       0 0 20px rgba(251, 191, 36, 0.1),
       inset 0 0 10px rgba(251, 191, 36, 0.1);
@@ -149,27 +327,23 @@ input:-webkit-autofill:focus {
   }
 }
 
-.glass {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(148, 163, 184, 0.08);
-}
-
-.glass-strong {
-  background: rgba(30, 41, 59, 0.75);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-}
-
-.glass-card {
-  background: rgba(30, 41, 59, 0.5);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(148, 163, 184, 0.06);
-}
-
 .content-serif {
   font-family: 'Lora', Georgia, 'Times New Roman', serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breathing-ring,
+  .breathing-circle {
+    animation: none;
+  }
+  .breathing-circle {
+    transform: scale(1);
+    opacity: 1;
+  }
+  .breathing-circle.scale-inhale,
+  .breathing-circle.scale-hold,
+  .breathing-circle.scale-exhale {
+    animation: none;
+    transform: scale(1);
+  }
 }
