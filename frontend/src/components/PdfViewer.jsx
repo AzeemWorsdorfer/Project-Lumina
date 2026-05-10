@@ -85,22 +85,22 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
 
   if (isMinimized) {
     return (
-      <div
-        className="fixed bottom-4 right-4 z-50 bg-slate-800 border border-slate-700 rounded-lg shadow-lg flex items-center gap-2 px-3 py-2"
-      >
-        <FileText className="w-4 h-4 text-slate-400" />
-        <span className="text-sm text-slate-300">PDF Viewer</span>
+      <div className="fixed bottom-4 right-4 z-50 bg-glass rounded-lg shadow-theme-lg flex items-center gap-2 px-3 py-2">
+        <FileText className="w-4 h-4 text-muted" />
+        <span className="text-sm text-secondary">PDF Viewer</span>
         <button
           onClick={() => setIsMinimized(false)}
-          className="p-1 hover:bg-slate-700 rounded"
+          className="p-1 hover:bg-secondary rounded"
+          aria-label="Restore PDF viewer"
         >
-          <Maximize2 className="w-4 h-4 text-slate-400" />
+          <Maximize2 className="w-4 h-4 text-muted" />
         </button>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-slate-700 rounded"
+          className="p-1 hover:bg-secondary rounded"
+          aria-label="Close PDF viewer"
         >
-          <X className="w-4 h-4 text-slate-400" />
+          <X className="w-4 h-4 text-muted" />
         </button>
       </div>
     );
@@ -108,7 +108,7 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
 
   return (
     <div
-      className="fixed bg-slate-900 border border-slate-700 rounded-lg shadow-2xl flex flex-col z-50 overflow-hidden"
+      className="fixed bg-glass-strong rounded-lg shadow-2xl flex flex-col z-50 overflow-hidden"
       style={{
         left: position.x,
         top: position.y,
@@ -117,33 +117,35 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
       }}
     >
       <div
-        className="flex items-center justify-between px-3 py-2 bg-slate-800 border-b border-slate-700 cursor-move select-none"
+        className="flex items-center justify-between px-3 py-2 bg-secondary/40 border-b border-default cursor-move select-none"
         onMouseDown={handleMouseDown}
       >
         <div className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-slate-400" />
-          <span className="text-sm font-medium text-slate-200">PDF Viewer</span>
+          <FileText className="w-4 h-4 text-muted" />
+          <span className="text-sm font-medium text-primary">PDF Viewer</span>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setIsMinimized(true)}
-            className="p-1 hover:bg-slate-700 rounded"
+            className="p-1 hover:bg-elevated rounded"
+            aria-label="Minimize PDF viewer"
           >
-            <Minus className="w-4 h-4 text-slate-400" />
+            <Minus className="w-4 h-4 text-muted" />
           </button>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-slate-700 rounded"
+            className="p-1 hover:bg-elevated rounded"
+            aria-label="Close PDF viewer"
           >
-            <X className="w-4 h-4 text-slate-400" />
+            <X className="w-4 h-4 text-muted" />
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-slate-950 custom-scrollbar">
+      <div className="flex-1 overflow-auto bg-primary custom-scrollbar">
         {error ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-red-400">{error}</p>
+            <p className="text-destructive">{error}</p>
           </div>
         ) : (
           <Document
@@ -152,8 +154,8 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
             onLoadError={onDocumentLoadError}
             loading={
               <div className="flex items-center justify-center h-full gap-2">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
-                <span className="text-slate-400">Loading PDF...</span>
+                <Loader2 className="w-6 h-6 animate-spin text-accent" />
+                <span className="text-secondary">Loading PDF...</span>
               </div>
             }
           >
@@ -170,23 +172,23 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
       </div>
 
       {numPages && (
-        <div className="flex items-center justify-center gap-4 px-3 py-2 bg-slate-800 border-t border-slate-700">
+        <div className="flex items-center justify-center gap-4 px-3 py-2 bg-secondary/40 border-t border-default">
           <button
             onClick={() => changePage(-1)}
             disabled={pageNumber <= 1}
-            className="p-1 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed rounded"
+            className="p-1 hover:bg-elevated disabled:opacity-50 disabled:cursor-not-allowed rounded"
+            aria-label="Previous page"
           >
-            <ChevronLeft className="w-4 h-4 text-slate-400" />
+            <ChevronLeft className="w-4 h-4 text-muted" />
           </button>
-          <span className="text-sm text-slate-400">
-            {pageNumber} / {numPages}
-          </span>
+          <span className="text-sm text-secondary font-serif">{pageNumber} / {numPages}</span>
           <button
             onClick={() => changePage(1)}
             disabled={pageNumber >= numPages}
-            className="p-1 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed rounded"
+            className="p-1 hover:bg-elevated disabled:opacity-50 disabled:cursor-not-allowed rounded"
+            aria-label="Next page"
           >
-            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <ChevronRight className="w-4 h-4 text-muted" />
           </button>
         </div>
       )}
@@ -196,7 +198,7 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
         onMouseDown={handleResizeStart}
       >
         <svg
-          className="w-4 h-4 text-slate-600"
+          className="w-4 h-4 text-muted"
           viewBox="0 0 16 16"
           fill="currentColor"
         >

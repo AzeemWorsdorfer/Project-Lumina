@@ -32,4 +32,5 @@ node_modules/
 dist/
 build/
 .eslintcache
-.cursor/
+
+AGENTS.md

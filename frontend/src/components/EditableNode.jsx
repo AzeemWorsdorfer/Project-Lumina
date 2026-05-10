@@ -4,13 +4,22 @@ import { getContrastColor } from "../utils/mapTransform.js";
 
 const EditableNode = ({ id, data, selected }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(data.label);
+  const [value, setValue] = useState(data.label || "");
   const inputRef = useRef(null);
+  const editRequestRef = useRef(data._editRequest);
   const { setNodes } = useReactFlow();
 
   const nodeType = data.nodeType || "textCard";
   const color = data.color || "#fbbf24";
   const textColor = getContrastColor(color);
+
+  useEffect(() => {
+    if (data._editRequest && data._editRequest !== editRequestRef.current) {
+      editRequestRef.current = data._editRequest;
+      setValue(data.label || "");
+      setIsEditing(true);
+    }
+  }, [data._editRequest, data.label]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -21,20 +30,22 @@ const EditableNode = ({ id, data, selected }) => {
 
   const handleDoubleClick = useCallback((e) => {
     e.stopPropagation();
+    setValue(data.label || "");
     setIsEditing(true);
-  }, []);
+  }, [data.label]);
 
   const handleBlur = useCallback(() => {
     setIsEditing(false);
-    const trimmed = value.trim();
-    if (trimmed !== data.label) {
-      setNodes((nds) =>
-        nds.map((node) =>
-          node.id === id ? { ...node, data: { ...node.data, label: trimmed || "Untitled" } } : node
-        )
-      );
-    }
-  }, [value, data.label, id, setNodes]);
+    const trimmed = value.trim() || "Untitled";
+    setValue(trimmed);
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === id
+          ? { ...node, data: { ...node.data, label: trimmed } }
+          : node,
+      ),
+    );
+  }, [value, id, setNodes]);
 
   const handleKeyDown = useCallback(
     (e) => {
@@ -42,22 +53,35 @@ const EditableNode = ({ id, data, selected }) => {
         e.preventDefault();
         handleBlur();
       } else if (e.key === "Escape") {
-        setValue(data.label);
+        setValue(data.label || "");
         setIsEditing(false);
       }
     },
-    [handleBlur, data.label]
+    [handleBlur, data.label],
   );
 
-  const handleChange = useCallback((e) => {
-    setValue(e.target.value);
-  }, []);
+  const handleChange = useCallback(
+    (e) => {
+      const nextValue = e.target.value;
+      setValue(nextValue);
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === id
+            ? { ...node, data: { ...node.data, label: nextValue || "Untitled" } }
+            : node,
+        ),
+      );
+    },
+    [id, setNodes],
+  );
 
   if (nodeType === "stickyNote") {
     return (
       <div
-        className={`rounded-lg shadow-lg transition-all duration-200 ${
-          selected ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-900 scale-105" : ""
+        className={`rounded-lg shadow-lg transition duration-200 ease-out-expo ${
+          selected
+            ? "ring-2 ring-accent ring-offset-2 scale-105"
+            : ""
         }`}
         style={{
           backgroundColor: color,
@@ -71,7 +95,7 @@ const EditableNode = ({ id, data, selected }) => {
         <Handle
           type="target"
           position={Position.Top}
-          className="!bg-slate-600 opacity-0"
+          className="!opacity-0"
         />
         <div className="p-3 h-full">
           {isEditing ? (
@@ -81,13 +105,13 @@ const EditableNode = ({ id, data, selected }) => {
               onChange={handleChange}
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
-              className="w-full h-full min-h-20 bg-transparent resize-none outline-none text-sm"
+              className="w-full h-full min-h-20 bg-transparent resize-none outline-none text-sm font-serif"
               style={{ color: textColor }}
               placeholder="Type something..."
             />
           ) : (
             <p
-              className="text-sm whitespace-pre-wrap break-words cursor-text"
+              className="text-sm whitespace-pre-wrap wrap-break-words cursor-text font-serif"
               style={{ color: textColor }}
             >
               {data.label || "Double-click to edit"}
@@ -97,7 +121,7 @@ const EditableNode = ({ id, data, selected }) => {
         <Handle
           type="source"
           position={Position.Bottom}
-          className="!bg-slate-600 opacity-0"
+          className="!opacity-0"
         />
       </div>
     );
@@ -105,10 +129,10 @@ const EditableNode = ({ id, data, selected }) => {
 
   return (
     <div
-      className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+      className={`px-4 py-3 rounded-lg border-2 transition duration-200 ease-out-expo ${
         selected
-          ? "border-amber-400 shadow-lg shadow-amber-500/20"
-          : "border-slate-600 hover:border-amber-500/50"
+          ? "border-accent shadow-lg"
+          : "border-default hover:border-accent/50"
       }`}
       style={{
         backgroundColor: color,
@@ -118,7 +142,7 @@ const EditableNode = ({ id, data, selected }) => {
       }}
       onDoubleClick={handleDoubleClick}
     >
-      <Handle type="target" position={Position.Top} className="!bg-slate-500" />
+      <Handle type="target" position={Position.Top} style={{ backgroundColor: "var(--text-muted)" }} />
       <div className="text-center">
         {isEditing ? (
           <textarea
@@ -127,18 +151,22 @@ const EditableNode = ({ id, data, selected }) => {
             onChange={handleChange}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
-            className="w-full bg-transparent text-base text-center outline-none resize-none border-b-2 border-amber-400 min-h-8"
+            className="w-full bg-transparent text-base text-center outline-none resize-none border-b-2 border-accent min-h-8"
             style={{ color: textColor }}
             rows={2}
             placeholder="Enter text..."
           />
         ) : (
-          <p className="text-base font-medium" style={{ color: textColor }}>
+          <p className="text-base font-serif" style={{ color: textColor }}>
             {data.label || "Untitled"}
           </p>
         )}
       </div>
-      <Handle type="source" position={Position.Bottom} className="!bg-slate-500" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ backgroundColor: "var(--text-muted)" }}
+      />
     </div>
   );
 };

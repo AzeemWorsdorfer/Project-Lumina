@@ -8,9 +8,11 @@ import { fetchPdfUrl } from "../services/api.js";
 import { toast, Toaster } from "sonner";
 import { PanelLeftOpen, BookOpen } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function Dashboard() {
   const { getAccessToken } = useAuth();
+  const { theme } = useTheme();
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -20,7 +22,7 @@ export default function Dashboard() {
   const [sessionHints, setSessionHints] = useState({});
 
   const getHints = () => sessionHints[activeSessionId] || [];
-  
+
   const handleAddHint = (hint) => {
     setSessionHints((prev) => ({
       ...prev,
@@ -36,17 +38,17 @@ export default function Dashboard() {
           ...(token && { Authorization: `Bearer ${token}` }),
         },
       });
-      
+
       if (response.status === 401) {
         toast.error("Session expired. Please log in again.");
         return;
       }
-      
+
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
         throw new Error(error.detail || "Failed to fetch sessions");
       }
-      
+
       const data = await response.json();
       setSessions(data);
     } catch (error) {
@@ -133,12 +135,12 @@ export default function Dashboard() {
                 },
               },
             );
-            
+
             if (response.status === 401) {
               toast.error("Session expired. Please log in again.");
               return;
             }
-            
+
             if (response.ok) {
               setSessions(sessions.filter((s) => s.id !== id));
               if (id === activeSessionId) {
@@ -175,7 +177,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex flex-1 h-full bg-slate-900 overflow-hidden text-slate-200">
+    <div className="flex flex-1 h-full bg-primary overflow-hidden text-primary">
       <Sidebar
         sessions={sessions}
         onNewSession={handleCreateSession}
@@ -188,11 +190,11 @@ export default function Dashboard() {
         isUploading={isUploading}
       />
 
-      <main className="flex-1 relative h-full transition-all duration-300 ease-in-out">
+      <main className="flex-1 relative h-full transition duration-300 ease-out-expo">
         {!isSidebarOpen && (
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="absolute top-4 left-4 z-50 p-2 bg-slate-800 hover:bg-slate-700 rounded-md border border-slate-700 transition-all"
+            className="absolute top-4 left-4 z-50 p-2 bg-elevated hover:bg-secondary rounded-md border border-default transition active:scale-[0.95] duration-150 ease-out-expo"
           >
             <PanelLeftOpen size={20} />
           </button>
@@ -200,29 +202,29 @@ export default function Dashboard() {
 
         {activeSessionId ? (
           <>
-            <MapCanvas 
-              sessionId={activeSessionId} 
+            <MapCanvas
+              sessionId={activeSessionId}
               hints={getHints()}
               onAddHint={handleAddHint}
             />
             <PomodoroTimer />
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-slate-500">
-            <div className="p-4 bg-slate-800/50 rounded-full mb-4">
-              <BookOpen className="w-12 h-12 text-amber-500/30" />
+          <div className="flex flex-col items-center justify-center h-full text-muted">
+            <div className="p-4 bg-elevated rounded-full mb-4 bg-glass border border-default">
+              <BookOpen className="w-12 h-12 text-accent opacity-50" />
             </div>
-            <p className="text-lg font-light text-slate-500 tracking-wide">
+            <p className="text-lg text-secondary font-serif italic tracking-wide">
               Select a session to explore the map
             </p>
-            <p className="text-sm text-slate-600 mt-2">
+            <p className="text-sm text-muted mt-2 font-serif">
               Upload a PDF to create a new study session
             </p>
           </div>
         )}
       </main>
 
-      <Toaster theme="dark" position="bottom-right" richColors closeButton />
+      <Toaster theme={theme} position="bottom-right" richColors closeButton />
 
       {showPdfViewer && pdfUrl && (
         <PdfViewer

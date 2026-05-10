@@ -6,22 +6,22 @@ const Sidebar = ({ sessions, onNewSession, onSelectSession, onDelete, onViewPdf,
   };
 
   return (
-    <div className={`h-full bg-slate-900 border-r border-slate-800 transition-all duration-300 ease-in-out flex flex-col ${isOpen ? 'w-72' : 'w-0 overflow-hidden'}`}>
-      
+    <div className={`h-full bg-glass border-r border-default transition-[width] duration-250 ease-out-expo overflow-hidden flex flex-col ${isOpen ? 'w-72' : 'w-0'}`}>
+
       {/* Sidebar Header */}
-      <div className="p-4 flex items-center justify-between border-b border-slate-800">
-        <h1 className="font-bold text-amber-400 tracking-tight">Lumina</h1>
-        <button onClick={onToggle} className="text-slate-500 hover:text-white transition-colors">
+      <div className="p-4 flex items-center justify-between border-b border-default">
+        <h1 className="font-bold text-accent tracking-tight font-serif">Lumina</h1>
+        <button onClick={onToggle} className="text-muted hover:text-primary transition active:scale-[0.97]" aria-label="Close sidebar">
           <PanelLeftClose size={20} />
         </button>
       </div>
 
-      {/* Sidebar Content (Buttons, Lists, etc.) */}
+      {/* Sidebar Content */}
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         <button
           onClick={onNewSession}
           disabled={isUploading}
-          className="flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg transition-colors mb-4 shadow-lg shadow-amber-500/10"
+          className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed text-on-accent py-2 px-4 rounded-lg transition active:scale-[0.97] duration-150 ease-out-expo mb-4 shadow-theme-lg"
         >
           {isUploading ? (
             <>
@@ -35,25 +35,26 @@ const Sidebar = ({ sessions, onNewSession, onSelectSession, onDelete, onViewPdf,
           )}
         </button>
 
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
+        <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-4">
           Your Sessions
         </p>
         <ul className="space-y-2">
           {sessions.map((session) => (
             <li
               key={session.id}
-              className="group flex items-center justify-between p-3 rounded-md hover:bg-slate-800 cursor-pointer text-slate-300 hover:text-white transition-all"
+              className="group flex items-center justify-between p-3 rounded-md hover:bg-secondary cursor-pointer text-secondary hover:text-primary transition active:scale-[0.98] duration-150 ease-out-expo"
               onClick={() => onSelectSession(session.id)}
             >
-              <span className="truncate text-base font-medium tracking-wide text-slate-200">{session.session_name}</span>
+              <span className="truncate text-base font-medium text-primary font-serif">{session.session_name}</span>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onViewPdf(session.id);
                   }}
-                  className="p-1 hover:text-blue-400 transition-colors"
+                  className="p-1 hover:text-accent transition active:scale-[0.9]"
                   title="View PDF"
+                  aria-label="View PDF"
                 >
                   <FileText size={16} />
                 </button>
@@ -62,7 +63,8 @@ const Sidebar = ({ sessions, onNewSession, onSelectSession, onDelete, onViewPdf,
                     e.stopPropagation();
                     onDeleteSession(session.id);
                   }}
-                  className="p-1 hover:text-red-400 transition-colors"
+                  className="p-1 hover:text-destructive transition active:scale-[0.9]"
+                  aria-label="Delete session"
                 >
                   <Trash2 size={16} />
                 </button>

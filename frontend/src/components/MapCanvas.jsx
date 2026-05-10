@@ -11,12 +11,14 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { fetchSession, saveMindMap, getSocraticHintStream } from "../services/api.js";
-import { backendToReactFlow, reactFlowToBackend, DEFAULT_NODE_COLOR, DEFAULT_NODE_TYPE, DEFAULT_EDGE_TYPE } from "../utils/mapTransform.js";
+import { backendToReactFlow, DEFAULT_NODE_COLOR, DEFAULT_NODE_TYPE, DEFAULT_EDGE_TYPE } from "../utils/mapTransform.js";
 import { toast } from "sonner";
 import { Loader2, Check, AlertCircle } from "lucide-react";
 import Toolbar from "./Toolbar.jsx";
 import EditableNode from "./EditableNode.jsx";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
+import useKeyboardShortcuts from "../hooks/useKeyboardShortcuts.js";
 
 const nodeTypes = { textCard: EditableNode, stickyNote: EditableNode };
 const initialNodes = [];
@@ -26,10 +28,21 @@ const isPlaceholderNode = (nodes) => {
   return nodes.length === 1 && nodes[0]?.data?.label === "Select a Session";
 };
 
+const getDraftKey = (sessionId) => `lumina-mindmap-draft-${sessionId}`;
+
+const parseDraft = (value) => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+
 let nodeCounter = 0;
 
 const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   const { getAccessToken } = useAuth();
+  const { theme } = useTheme();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,18 +52,63 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   const [edgeSource, setEdgeSource] = useState(null);
   const debounceRef = useRef(null);
 
+  const historyRef = useRef({ stack: [], index: -1 });
+  const MAX_HISTORY = 50;
+  const isUndoingRedoing = useRef(false);
+
+  const takeSnapshot = useCallback(() => {
+    if (isUndoingRedoing.current) return;
+    const { stack, index } = historyRef.current;
+    const snapshot = {
+      nodes: JSON.parse(JSON.stringify(nodes)),
+      edges: JSON.parse(JSON.stringify(edges)),
+    };
+    const newStack = stack.slice(0, index + 1);
+    newStack.push(snapshot);
+    while (newStack.length > MAX_HISTORY) newStack.shift();
+    historyRef.current = { stack: newStack, index: newStack.length - 1 };
+  }, [nodes, edges]);
+
+  const handleUndo = useCallback(() => {
+    const { stack, index } = historyRef.current;
+    if (index < 0) return;
+    const snapshot = stack[index];
+    isUndoingRedoing.current = true;
+    setNodes(snapshot.nodes);
+    setEdges(snapshot.edges);
+    historyRef.current = { stack, index: index - 1 };
+    setTimeout(() => { isUndoingRedoing.current = false; }, 0);
+  }, [setNodes, setEdges]);
+
+  const handleRedo = useCallback(() => {
+    const { stack, index } = historyRef.current;
+    if (index >= stack.length - 2) return;
+    const snapshot = stack[index + 2];
+    isUndoingRedoing.current = true;
+    setNodes(snapshot.nodes);
+    setEdges(snapshot.edges);
+    historyRef.current = { stack, index: index + 1 };
+    setTimeout(() => { isUndoingRedoing.current = false; }, 0);
+  }, [setNodes, setEdges]);
+
   const loadSession = useCallback(async (id) => {
     if (!id) return;
-    
+
     setIsLoading(true);
     setSaveStatus("saved");
     setHasLoaded(false);
-    
+
     try {
       const token = await getAccessToken();
       const session = await fetchSession(id, token);
-      
-      if (session.mind_map_data && session.mind_map_data.nodes?.length > 0) {
+
+      const draft = parseDraft(localStorage.getItem(getDraftKey(id)));
+      const hasDraft = draft?.nodes?.length > 0 || draft?.edges?.length > 0;
+
+      if (hasDraft) {
+        setNodes(draft.nodes || initialNodes);
+        setEdges(draft.edges || initialEdges);
+      } else if (session.mind_map_data && session.mind_map_data.nodes?.length > 0) {
         const { nodes: savedNodes, edges: savedEdges } = backendToReactFlow(
           session.mind_map_data
         );
@@ -58,7 +116,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         setEdges(savedEdges);
       } else {
         setNodes(initialNodes);
-        setEdges([]);
+        setEdges(initialEdges);
       }
       setSaveStatus("saved");
     } catch (error) {
@@ -69,7 +127,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         toast.error("Failed to load session data");
       }
       setNodes(initialNodes);
-      setEdges([]);
+      setEdges(initialEdges);
       setSaveStatus("saved");
     } finally {
       setIsLoading(false);
@@ -86,13 +144,13 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   const saveMap = useCallback(async (currentNodes, currentEdges) => {
     if (!sessionId || !hasLoaded) return;
     if (currentNodes.length === 0) return;
-    
+
     setSaveStatus("saving");
-    
+
     try {
       const token = await getAccessToken();
-      const backendData = reactFlowToBackend(currentNodes, currentEdges);
-      await saveMindMap(sessionId, backendData.nodes, backendData.edges, token);
+      await saveMindMap(sessionId, currentNodes, currentEdges, token);
+      localStorage.removeItem(getDraftKey(sessionId));
       setSaveStatus("saved");
     } catch (error) {
       console.error("Error saving map:", error);
@@ -109,21 +167,132 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   useEffect(() => {
     if (!sessionId || !hasLoaded) return;
     if (isPlaceholderNode(nodes)) return;
-    
+
+    try {
+      localStorage.setItem(
+        getDraftKey(sessionId),
+        JSON.stringify({ nodes, edges })
+      );
+    } catch (error) {
+      console.warn("Unable to save draft to localStorage:", error);
+    }
+
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
-    
+
     debounceRef.current = setTimeout(() => {
       saveMap(nodes, edges);
     }, 500);
-    
+
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
     };
   }, [nodes, edges, sessionId, saveMap, hasLoaded]);
+
+  const handleAddNode = useCallback((nodeType = DEFAULT_NODE_TYPE, color = DEFAULT_NODE_COLOR) => {
+    nodeCounter += 1;
+
+    const offsetX = 250 + (nodeCounter * 50) % 200;
+    const offsetY = 250 + (nodeCounter * 50) % 200;
+
+    const newNode = {
+      id: `node-${Date.now()}-${nodeCounter}`,
+      position: { x: offsetX, y: offsetY },
+      type: nodeType,
+      data: {
+        label: nodeType === "stickyNote" ? "" : "New Card",
+        nodeType: nodeType,
+        color: color,
+        related_source_chunk_id: null,
+      },
+    };
+
+    takeSnapshot();
+    setNodes((nds) => [...nds, newNode]);
+  }, [setNodes, takeSnapshot]);
+
+  const handleAddChild = useCallback(() => {
+    const selected = nodes.find((n) => n.selected);
+    if (!selected) {
+      toast.info("Select a parent node first");
+      return;
+    }
+    nodeCounter += 1;
+    const childNode = {
+      id: `node-${Date.now()}-${nodeCounter}`,
+      type: DEFAULT_NODE_TYPE,
+      position: {
+        x: selected.position.x + (nodeCounter * 50) % 300,
+        y: selected.position.y + 200 + (nodeCounter * 30) % 100,
+      },
+      data: {
+        label: "New Card",
+        nodeType: DEFAULT_NODE_TYPE,
+        color: DEFAULT_NODE_COLOR,
+        related_source_chunk_id: null,
+      },
+    };
+    const childEdge = {
+      id: `edge-${Date.now()}-${nodeCounter}`,
+      source: selected.id,
+      target: childNode.id,
+      type: DEFAULT_EDGE_TYPE,
+      markerEnd: { type: MarkerType.ArrowClosed, width: 15, height: 15 },
+    };
+    takeSnapshot();
+    setNodes((nds) => [...nds, childNode]);
+    setEdges((eds) => [...eds, childEdge]);
+  }, [nodes, takeSnapshot, setNodes, setEdges]);
+
+  const handleAddSibling = useCallback(() => {
+    const selected = nodes.find((n) => n.selected);
+    if (!selected) {
+      handleAddNode();
+      return;
+    }
+    nodeCounter += 1;
+    const siblingNode = {
+      id: `node-${Date.now()}-${nodeCounter}`,
+      type: DEFAULT_NODE_TYPE,
+      position: {
+        x: selected.position.x + 250 + (nodeCounter * 40) % 200,
+        y: selected.position.y,
+      },
+      data: {
+        label: "New Card",
+        nodeType: DEFAULT_NODE_TYPE,
+        color: DEFAULT_NODE_COLOR,
+        related_source_chunk_id: null,
+      },
+    };
+    takeSnapshot();
+    setNodes((nds) => [...nds, siblingNode]);
+  }, [nodes, handleAddNode, takeSnapshot, setNodes]);
+
+  const handleEditNode = useCallback(() => {
+    const selected = nodes.find((n) => n.selected);
+    if (!selected) return;
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === selected.id
+          ? { ...n, data: { ...n.data, _editRequest: Date.now() } }
+          : n
+      )
+    );
+  }, [nodes, setNodes]);
+
+  const handleDeselectAll = useCallback(() => {
+    setNodes((nds) =>
+      nds.map((n) => ({ ...n, selected: false }))
+    );
+    setEdges((eds) =>
+      eds.map((e) => ({ ...e, selected: false }))
+    );
+    if (edgeSource) setEdgeSource(null);
+  }, [setNodes, setEdges, edgeSource]);
 
   const onConnect = useCallback(
     (params) => {
@@ -136,41 +305,26 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
           height: 15,
         },
       };
+      takeSnapshot();
       setEdges((eds) => addEdge(newEdge, eds));
     },
-    [setEdges]
+    [setEdges, takeSnapshot]
   );
 
-  const handleAddNode = useCallback((nodeType = DEFAULT_NODE_TYPE, color = DEFAULT_NODE_COLOR) => {
-    nodeCounter += 1;
-    
-    const offsetX = 250 + (nodeCounter * 50) % 200;
-    const offsetY = 250 + (nodeCounter * 50) % 200;
-    
-    const newNode = {
-      id: `node-${Date.now()}-${nodeCounter}`,
-      position: { x: offsetX, y: offsetY },
-      type: nodeType,
-      data: {
-        label: nodeType === "stickyNote" ? "" : "New Card",
-        nodeType: nodeType,
-        color: color,
-        related_source_chunk_id: null,
-      },
-    };
-    
-    setNodes((nds) => [...nds, newNode]);
-  }, [setNodes]);
-
   const handleClearAll = useCallback(() => {
+    if (nodes.length === 0 && edges.length === 0) return;
+    takeSnapshot();
     setNodes([]);
     setEdges([]);
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, nodes, edges, takeSnapshot]);
 
   const handleDeleteSelected = useCallback(() => {
+    const hasSelected = nodes.some((n) => n.selected) || edges.some((e) => e.selected);
+    if (!hasSelected) return;
+    takeSnapshot();
     setNodes((nds) => nds.filter((node) => !node.selected));
     setEdges((eds) => eds.filter((edge) => !edge.selected));
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, nodes, edges, takeSnapshot]);
 
   const handleNodeClick = useCallback((event, node) => {
     if (event.shiftKey) {
@@ -178,8 +332,9 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         setEdgeSource(node.id);
         toast.info("Select second node to connect", { duration: 2000 });
       } else if (edgeSource !== node.id) {
-        setEdges((eds) => addEdge({ 
-          source: edgeSource, 
+        takeSnapshot();
+        setEdges((eds) => addEdge({
+          source: edgeSource,
           target: node.id,
           type: DEFAULT_EDGE_TYPE,
           markerEnd: {
@@ -192,12 +347,13 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         setEdgeSource(null);
       }
     }
-  }, [edgeSource, setEdges]);
+  }, [edgeSource, setEdges, takeSnapshot]);
 
   const handleEdgeClick = useCallback((event, edge) => {
     if (event.shiftKey) {
       const label = prompt("Enter edge label (or leave empty to remove):");
       if (label !== null) {
+        takeSnapshot();
         setEdges((eds) =>
           eds.map((e) =>
             e.id === edge.id ? { ...e, label: label || undefined } : e
@@ -205,16 +361,16 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         );
       }
     }
-  }, [setEdges]);
+  }, [setEdges, takeSnapshot]);
 
   const handleGetHint = async () => {
     if (isPlaceholderNode(nodes) || nodes.length === 0) {
       toast.error("Add some nodes to the map first");
       return;
     }
-    
+
     setIsGeneratingHint(true);
-    
+
     try {
       const token = await getAccessToken();
       let fullHint = "";
@@ -246,16 +402,29 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
     saveMap(nodes, edges);
   };
 
+  useKeyboardShortcuts({
+    onDelete: handleDeleteSelected,
+    onUndo: handleUndo,
+    onRedo: handleRedo,
+    onAddChild: handleAddChild,
+    onAddSibling: handleAddSibling,
+    onDeselectAll: handleDeselectAll,
+    onEditNode: handleEditNode,
+    onSave: () => saveMap(nodes, edges),
+  });
+
   const selectedNodeCount = nodes.filter((n) => n.selected).length;
   const selectedEdgeCount = edges.filter((e) => e.selected).length;
 
+  const bgColor = theme === "dark" ? "#1e293b" : "#334155";
+
   return (
-    <div className="h-full w-full bg-slate-900 relative">
+    <div className="h-full w-full bg-primary relative">
       {isLoading && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/80">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-primary/80">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
-            <p className="text-slate-400 text-sm">Loading session...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-accent" />
+            <p className="text-secondary text-sm">Loading session...</p>
           </div>
         </div>
       )}
@@ -270,7 +439,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         onEdgeClick={handleEdgeClick}
         nodeTypes={nodeTypes}
         fitView
-        colorMode="dark"
+        colorMode={theme}
         proOptions={{ hideAttribution: true }}
         defaultEdgeOptions={{
           type: DEFAULT_EDGE_TYPE,
@@ -282,16 +451,16 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         }}
       >
         <Controls />
-        <MiniMap 
-          zoomable 
-          pannable 
+        <MiniMap
+          zoomable
+          pannable
           nodeColor={(node) => node.data?.color || DEFAULT_NODE_COLOR}
         />
-        <Background variant="dots" gap={12} size={1} color="#334155" />
+        <Background variant="dots" gap={12} size={1} color={bgColor} />
       </ReactFlow>
-      
-      <Toolbar 
-        onAddNode={handleAddNode} 
+
+      <Toolbar
+        onAddNode={handleAddNode}
         onClearAll={handleClearAll}
         onDeleteSelected={handleDeleteSelected}
         nodeCount={nodes.length}
@@ -302,22 +471,24 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         isGeneratingHint={isGeneratingHint}
         edgeSource={edgeSource}
         onCancelEdge={() => setEdgeSource(null)}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
       />
 
       <div className="absolute bottom-4 right-4 z-20">
         <div
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition duration-150 ease-out-expo ${
             saveStatus === "saved"
-              ? "bg-emerald-900/50 text-emerald-400"
+              ? "bg-success-subtle text-success"
               : saveStatus === "saving"
-              ? "bg-amber-900/50 text-amber-400"
-              : "bg-red-900/50 text-red-400"
+              ? "bg-accent-subtle text-accent"
+              : "bg-destructive-subtle text-destructive"
           }`}
         >
           {saveStatus === "saved" && <Check className="w-3 h-3" />}
           {saveStatus === "saving" && <Loader2 className="w-3 h-3 animate-spin" />}
           {saveStatus === "error" && (
-            <button onClick={retrySave} className="hover:underline flex items-center gap-1">
+            <button onClick={retrySave} className="hover:underline flex items-center gap-1" aria-label="Retry save">
               <AlertCircle className="w-3 h-3" />
               Retry
             </button>
