@@ -6,7 +6,7 @@
 - **Backend**: FastAPI + Python 3.13, package manager: **`uv`** (not pip/poetry)
 - **Frontend**: React 19 + Vite, package manager: npm
 - **Database**: Supabase (PostgreSQL + **pgvector** extension required)
-- **AI**: Ollama local model (`deepseek-r1:8b`) — no API key, runs locally
+- **AI**: OpenAI API (`gpt-4o-mini` for chat, `text-embedding-3-small` for embeddings) — requires `OPENAI_API_KEY` in `.env`
 
 ## Essential Commands
 
@@ -31,19 +31,22 @@ npm run lint                      # ESLint
 
 ## Setup Prerequisites (Easy to Miss)
 
-1. **Ollama must be running locally** with model pulled:
+1. **OpenAI API key** — add to `backend/.env`:
    ```bash
-   ollama pull deepseek-r1:8b
+   OPENAI_API_KEY=sk-...
    ```
+   Set a $5 monthly hard limit in [OpenAI dashboard → Billing → Usage limits](https://platform.openai.com/usage-limits).
 
-2. **Supabase pgvector extension** must be enabled (run in SQL Editor):
+2. **Rate limiting**: Application enforces 10 requests/minute per user (configurable via `OPENAI_RATE_LIMIT_RPM`).
+
+3. **Supabase pgvector extension** must be enabled (run in SQL Editor):
    ```sql
    CREATE EXTENSION IF NOT EXISTS vector;
    ```
    Then run the full setup SQL from `backend/Docs/DATABASE_SETUP.md`
 
-3. **Environment files** needed in two locations:
-   - `backend/.env` — `SUPABASE_URL`, `SUPABASE_KEY`
+4. **Environment files** needed in two locations:
+   - `backend/.env` — `SUPABASE_URL`, `SUPABASE_KEY`, `OPENAI_API_KEY`
    - `frontend/.env` — `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 
 ## Architecture Notes
@@ -59,7 +62,7 @@ npm run lint                      # ESLint
 ## Testing
 
 - **Framework**: pytest with pytest-asyncio for async endpoints
-- **Fixtures**: Defined in `backend/tests/conftest.py` (mock Supabase + Ollama)
+- **Fixtures**: Defined in `backend/tests/conftest.py` (mock Supabase + OpenAI)
 - **Structure**: `tests/unit/` (by service) and `tests/integration/` (API tests)
 - **No frontend tests configured** — only lint via ESLint
 

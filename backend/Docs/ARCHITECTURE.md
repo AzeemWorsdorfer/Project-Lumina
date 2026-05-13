@@ -14,8 +14,10 @@ Lumina is an AI-powered study companion that facilitates active learning through
                                │
                                ▼
                         ┌─────────────────┐
-                        │   Ollama        │
-                         │   (deepseek-r1:8b)  │
+                        │   OpenAI API    │
+                        │ (gpt-4o-mini +  │
+                        │ text-embedding- │
+                        │     3-small)    │
                         └─────────────────┘
 ```
 
@@ -28,7 +30,7 @@ Lumina is an AI-powered study companion that facilitates active learning through
 - **__init__.py**: Service coordination and error handling
 
 ### Reasoning Services (`app/services/reasoning/`)
-- **ai_service.py**: Socratic hint generation using Ollama
+- **ai_service.py**: Socratic hint generation using OpenAI (gpt-4o-mini)
 - **search_service.py**: Vector similarity search and context retrieval
 - **session_manager.py**: Study session lifecycle management
 - **prompt.py**: Specialized prompt engineering for Socratic tutoring
@@ -91,7 +93,7 @@ Mind Map State → Context Retrieval → AI Reasoning → Socratic Hint → User
 
 - **Backend**: FastAPI (Python 3.13) with Pydantic validation
 - **Database**: Supabase (PostgreSQL + pgvector)
-- **AI**: Ollama (deepseek-r1:8b) for local inference
+- **AI**: OpenAI (gpt-4o-mini for chat, text-embedding-3-small for embeddings)
 - **Processing**: PyMuPDF for PDF extraction, semantic chunking
 - **Frontend**: React 19 + Vite + ReactFlow (@xyflow/react)
 - **Quality**: Ruff linting, pytest testing framework
@@ -102,6 +104,8 @@ Mind Map State → Context Retrieval → AI Reasoning → Socratic Hint → User
 backend/
 ├── app/
 │   ├── main.py                 # FastAPI app entry point
+│   ├── app/
+│   │   └── settings.py         # Central config (OpenAI, rate limits, etc.)
 │   ├── api/v1/
 │   │   ├── deps/              # Dependencies (auth middleware)
 │   │   └── endpoints/         # API route handlers
@@ -109,7 +113,8 @@ backend/
 │   │       ├── ingestion.py   # PDF upload endpoints
 │   │       └── study.py       # Study session endpoints
 │   ├── core/
-│   │   └── database.py        # Supabase client configuration
+│   │   ├── database.py        # Supabase client configuration
+│   │   └── rate_limiter.py    # In-memory sliding-window rate limiter
 │   ├── schemas/
 │   │   └── mindmap.py         # Pydantic models
 │   └── services/
