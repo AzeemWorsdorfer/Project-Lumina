@@ -7,6 +7,7 @@ from pydantic import UUID4
 
 from app.api.v1.deps import get_current_user
 from app.core.database import supabase
+from app.core.rate_limiter import rate_limiter
 from app.schemas.mindmap import MindMapState, SocraticHint
 from app.services.reasoning.ai_service import (
     generate_socratic_hint,
@@ -140,6 +141,16 @@ async def get_hint(
 ) -> SocraticHint:
     """Generate a Socratic hint based on the current mind map state."""
     user_id = current_user.get("id")
+
+    if not rate_limiter.check(f"hint:{user_id}"):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                "Rate limit exceeded. Maximum 10 requests per minute. "
+                "Please wait before trying again."
+            ),
+        )
+
     try:
         session_data = (
             supabase.table("study_sessions")
@@ -184,6 +195,16 @@ async def get_hint_stream(
 ):
     """Generate a Socratic hint with streaming response."""
     user_id = current_user.get("id")
+
+    if not rate_limiter.check(f"hint-stream:{user_id}"):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                "Rate limit exceeded. Maximum 10 requests per minute. "
+                "Please wait before trying again."
+            ),
+        )
+
     try:
         session_data = (
             supabase.table("study_sessions")
@@ -300,7 +321,10 @@ async def get_pdf_signed_url(
         if not res.data or not res.data.get("sources"):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="PDF source not found for this session. Check if the session has a source_id.",
+                detail=(
+                    "PDF source not found for this session. "
+                    "Check if the session has a source_id."
+                ),
             )
 
         file_name = res.data["sources"]["file_name"]
