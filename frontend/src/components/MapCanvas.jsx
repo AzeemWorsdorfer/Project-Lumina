@@ -51,6 +51,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [edgeSource, setEdgeSource] = useState(null);
   const debounceRef = useRef(null);
+  const reactFlowInstance = useRef(null);
 
   const historyRef = useRef({ stack: [], index: -1 });
   const MAX_HISTORY = 50;
@@ -192,18 +193,20 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
     };
   }, [nodes, edges, sessionId, saveMap, hasLoaded]);
 
-  const handleAddNode = useCallback((nodeType = DEFAULT_NODE_TYPE, color = DEFAULT_NODE_COLOR) => {
+  const handleAddNode = useCallback((nodeType = DEFAULT_NODE_TYPE, color = DEFAULT_NODE_COLOR, position = null) => {
     nodeCounter += 1;
 
-    const offsetX = 250 + (nodeCounter * 50) % 200;
-    const offsetY = 250 + (nodeCounter * 50) % 200;
+    const pos = position || {
+      x: 250 + (nodeCounter * 50) % 200,
+      y: 250 + (nodeCounter * 50) % 200,
+    };
 
     const newNode = {
       id: `node-${Date.now()}-${nodeCounter}`,
-      position: { x: offsetX, y: offsetY },
+      position: pos,
       type: nodeType,
       data: {
-        label: nodeType === "stickyNote" ? "" : "New Card",
+        label: "New Card",
         nodeType: nodeType,
         color: color,
         related_source_chunk_id: null,
@@ -439,6 +442,17 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         onEdgeClick={handleEdgeClick}
         nodeTypes={nodeTypes}
         fitView
+        zoomOnDoubleClick={false}
+        onInit={(instance) => { reactFlowInstance.current = instance; }}
+        onDoubleClick={(event) => {
+          if (event.target.closest(".react-flow__node")) return;
+          if (!reactFlowInstance.current) return;
+          const position = reactFlowInstance.current.screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+          });
+          handleAddNode(DEFAULT_NODE_TYPE, DEFAULT_NODE_COLOR, position);
+        }}
         colorMode={theme}
         proOptions={{ hideAttribution: true }}
         defaultEdgeOptions={{
@@ -469,8 +483,6 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         onGetHint={handleGetHint}
         hints={hints}
         isGeneratingHint={isGeneratingHint}
-        edgeSource={edgeSource}
-        onCancelEdge={() => setEdgeSource(null)}
         onUndo={handleUndo}
         onRedo={handleRedo}
       />

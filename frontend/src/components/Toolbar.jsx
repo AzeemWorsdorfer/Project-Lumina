@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Square, StickyNote, CircleX, Trash2, GitBranch, Lightbulb, Loader2, X, ChevronDown, Plus, Undo2, Redo2 } from "lucide-react";
+import { CircleX, Trash2, Lightbulb, Loader2, X, ChevronDown, Plus, Undo2, Redo2, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { NODE_COLORS, DEFAULT_NODE_COLOR } from "../utils/mapTransform.js";
 
@@ -20,18 +20,17 @@ const Toolbar = ({
   onGetHint,
   hints = [],
   isGeneratingHint = false,
-  edgeSource = null,
-  onCancelEdge = null,
   onUndo,
   onRedo,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedHint, setSelectedHint] = useState(null);
   const [showNodeMenu, setShowNodeMenu] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [selectedColor, setSelectedColor] = useState(DEFAULT_NODE_COLOR);
-  const [selectedNodeType, setSelectedNodeType] = useState("textCard");
   const dropdownRef = useRef(null);
   const nodeMenuRef = useRef(null);
+  const helpRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -41,15 +40,18 @@ const Toolbar = ({
       if (nodeMenuRef.current && !nodeMenuRef.current.contains(event.target)) {
         setShowNodeMenu(false);
       }
+      if (helpRef.current && !helpRef.current.contains(event.target)) {
+        setShowHelp(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleAddNode = () => {
-    onAddNode(selectedNodeType, selectedColor);
+    onAddNode("textCard", selectedColor);
     setShowNodeMenu(false);
-    toast.success(`Added ${selectedNodeType === "stickyNote" ? "sticky note" : "text card"}`, { duration: 1500 });
+    toast.success("Added card", { duration: 1500 });
   };
 
   const handleClearAll = () => {
@@ -130,34 +132,6 @@ const Toolbar = ({
               : 'opacity-0 scale-95 pointer-events-none'
           }`}>
               <div className="p-3 border-b border-default">
-                <p className="text-xs text-muted uppercase font-medium mb-2">Node Type</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSelectedNodeType("textCard")}
-                    className={`flex-1 p-2 rounded-md text-xs font-medium transition active:scale-[0.97] duration-150 ease-out-expo flex items-center justify-center gap-1 ${
-                      selectedNodeType === "textCard"
-                        ? "bg-accent text-on-accent"
-                        : "bg-elevated text-secondary hover:bg-secondary"
-                    }`}
-                  >
-                    <Square className="w-3 h-3" />
-                    Card
-                  </button>
-                  <button
-                    onClick={() => setSelectedNodeType("stickyNote")}
-                    className={`flex-1 p-2 rounded-md text-xs font-medium transition active:scale-[0.97] duration-150 ease-out-expo flex items-center justify-center gap-1 ${
-                      selectedNodeType === "stickyNote"
-                        ? "bg-accent text-on-accent"
-                        : "bg-elevated text-secondary hover:bg-secondary"
-                    }`}
-                  >
-                    <StickyNote className="w-3 h-3" />
-                    Note
-                  </button>
-                </div>
-              </div>
-
-              <div className="p-3 border-b border-default">
                 <p className="text-xs text-muted uppercase font-medium mb-2">Color</p>
                 <div className="grid grid-cols-4 gap-2">
                   {COLOR_NAMES.map((colorName) => (
@@ -183,7 +157,7 @@ const Toolbar = ({
                   className="w-full p-2 bg-accent hover:bg-accent-hover rounded-md transition active:scale-[0.97] duration-150 ease-out-expo text-sm font-medium text-on-accent flex items-center justify-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  Add {selectedNodeType === "stickyNote" ? "Note" : "Card"}
+                  Add Card
                 </button>
               </div>
             </div>
@@ -287,24 +261,49 @@ const Toolbar = ({
             </div>
         </div>
 
-        <div className={`bg-glass rounded-lg p-2 text-xs text-center shadow-theme-xl transition duration-150 ease-out-expo ${
-          edgeSource ? "!border-accent text-accent" : "border-default text-muted"
-        }`}>
-          <div className="flex items-center gap-1 justify-center mb-1">
-            <GitBranch className={`w-3 h-3 ${edgeSource ? "text-accent" : ""}`} />
-            <span>Connect</span>
-          </div>
-          <p>Shift + Click</p>
-          {edgeSource ? (
+        <div className="relative" ref={helpRef}>
+          <div className="bg-glass rounded-lg p-2 shadow-theme-xl">
             <button
-              onClick={onCancelEdge}
-              className="mt-1 text-accent hover:text-accent-hover underline transition active:scale-[0.95] duration-150 ease-out-expo"
+              onClick={() => setShowHelp(!showHelp)}
+              className="p-2 bg-elevated hover:bg-accent rounded-md transition active:scale-[0.95] duration-150 ease-out-expo group flex items-center justify-center w-full"
+              title="Keyboard Shortcuts"
+              aria-label="Keyboard shortcuts"
             >
-              Cancel (Esc)
+              <HelpCircle className="w-4 h-4 text-secondary group-hover:text-on-accent" />
             </button>
-          ) : (
-            <p>two nodes</p>
-          )}
+          </div>
+
+          <div className={`absolute right-0 top-full mt-2 w-64 origin-top-right bg-glass rounded-lg shadow-theme-xl overflow-hidden transition-[opacity,transform] duration-150 ease-out-expo ${
+            showHelp
+              ? 'opacity-100 scale-100 pointer-events-auto'
+              : 'opacity-0 scale-95 pointer-events-none'
+          }`}>
+              <div className="p-3">
+                <p className="text-xs text-muted uppercase font-medium mb-3">Keyboard Shortcuts</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-primary">Shift + Click node</span>
+                    <span className="text-xs text-muted">Connect nodes</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-primary">Delete / Backspace</span>
+                    <span className="text-xs text-muted">Delete selected</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-primary">Escape</span>
+                    <span className="text-xs text-muted">Cancel / Deselect</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-primary">{mod}+Z</span>
+                    <span className="text-xs text-muted">Undo</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-primary">{mod}+Shift+Z</span>
+                    <span className="text-xs text-muted">Redo</span>
+                  </div>
+                </div>
+              </div>
+            </div>
         </div>
       </div>
 
