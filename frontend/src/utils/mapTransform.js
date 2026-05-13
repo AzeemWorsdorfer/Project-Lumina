@@ -22,7 +22,7 @@ export const NODE_COLORS_LIGHT = {
 
 export const DEFAULT_NODE_COLOR = "#fbbf24";
 export const DEFAULT_NODE_TYPE = "textCard";
-export const DEFAULT_EDGE_TYPE = "smoothstep";
+export const DEFAULT_EDGE_TYPE = "default";
 export const DEFAULT_EDGE_COLOR = "#64748b";
 
 export const backendToReactFlow = (mindMapData) => {
@@ -53,7 +53,7 @@ export const backendToReactFlow = (mindMapData) => {
     source: edge.source,
     target: edge.target,
     label: edge.label || undefined,
-    type: edge.edge_type || "smoothstep",
+    type: edge.edge_type || "default",
     style: { stroke: edge.color || DEFAULT_EDGE_COLOR },
     animated: false,
   }));
@@ -78,7 +78,7 @@ export const reactFlowToBackend = (nodes, edges) => {
       source: edge.source,
       target: edge.target,
       label: edge.label || null,
-      edge_type: edge.type || "smoothstep",
+      edge_type: edge.type || "default",
       color: edge.style?.stroke || DEFAULT_EDGE_COLOR,
     })),
   };
