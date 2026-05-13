@@ -26,11 +26,18 @@ def mock_supabase() -> Generator[MagicMock, None, None]:
 
 
 @pytest.fixture
-def mock_ollama() -> Generator[MagicMock, None, None]:
-    """Mock Ollama client."""
-    with patch("ollama") as mock:
+def mock_openai() -> Generator[MagicMock, None, None]:
+    """Mock OpenAI client."""
+    with (
+        patch("openai.OpenAI") as mock_openai,
+        patch("openai.AsyncOpenAI") as mock_async,
+    ):
         mock_client = MagicMock()
-        mock.return_value = mock_client
+        mock_openai.return_value = mock_client
+
+        mock_async_client = MagicMock()
+        mock_async.return_value = mock_async_client
+
         yield mock_client
 
 
