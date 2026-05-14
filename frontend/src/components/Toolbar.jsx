@@ -282,6 +282,10 @@ const Toolbar = ({
                 <p className="text-xs text-muted uppercase font-medium mb-3">Keyboard Shortcuts</p>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
+                    <span className="text-sm text-primary">Double click canvas</span>
+                    <span className="text-xs text-muted">Add node</span>
+                  </div>
+                  <div className="flex items-center justify-between">
                     <span className="text-sm text-primary">Shift + Click node</span>
                     <span className="text-xs text-muted">Connect nodes</span>
                   </div>
