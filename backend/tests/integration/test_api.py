@@ -8,13 +8,30 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+@pytest.fixture
+def mock_auth():
+    """Mock authentication by overriding the dependency."""
+    from app.api.v1.deps.auth import get_current_user, security
+
+    def override_get_current_user():
+        return {
+            "id": str(uuid.uuid4()),
+            "email": "test@example.com",
+        }
+
+    from app.main import app
+
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    yield
+    app.dependency_overrides.clear()
+
+
 class TestUploadPdfEndpoint:
     """Test the PDF upload endpoint."""
 
     @pytest.fixture(autouse=True)
-    def setup_mocks(self) -> None:
+    def setup_mocks(self, mock_auth) -> None:
         """Setup common mocks for all tests."""
-        # Create a valid PDF in memory
         fitz = pytest.importorskip("fitz")
         pdf_buffer = BytesIO()
         doc = fitz.open()
@@ -78,7 +95,6 @@ class TestUploadPdfEndpoint:
             files={"file": ("", BytesIO(self.pdf_content), "application/pdf")},
         )
 
-        # Empty filename should return 400 or 422
         assert response.status_code in [400, 422]
 
     def test_upload_pdf_source_initialization_failure(self, client: TestClient) -> None:
@@ -139,6 +155,10 @@ class TestUploadPdfEndpoint:
 class TestGetSocraticHintEndpoint:
     """Test the Socratic hint endpoint."""
 
+    @pytest.fixture(autouse=True)
+    def setup_mocks(self, mock_auth):
+        pass
+
     def test_get_hint_invalid_payload(self, client: TestClient) -> None:
         """Test hint request with invalid payload returns 422."""
         response = client.post(
@@ -152,16 +172,23 @@ class TestGetSocraticHintEndpoint:
 class TestGetSessionEndpoint:
     """Test the session retrieval endpoint."""
 
+    @pytest.fixture(autouse=True)
+    def setup_mocks(self, mock_auth):
+        pass
+
     def test_get_session_invalid_uuid(self, client: TestClient) -> None:
         """Test invalid UUID format returns error."""
         response = client.get("/api/v1/session/invalid-uuid")
 
-        # Invalid UUID should return 400, 404, or 422
         assert response.status_code in [400, 404, 422, 500]
 
 
 class TestUpdateMapEndpoint:
     """Test the map update endpoint."""
+
+    @pytest.fixture(autouse=True)
+    def setup_mocks(self, mock_auth):
+        pass
 
     def test_update_map_invalid_payload(self, client: TestClient) -> None:
         """Test update with invalid payload returns 422."""
@@ -178,18 +205,17 @@ class TestUpdateMapEndpoint:
 class TestApiEndpointsIntegration:
     """Basic integration tests for API workflow."""
 
+    @pytest.fixture(autouse=True)
+    def setup_mocks(self, mock_auth):
+        pass
+
     def test_endpoints_exist(self, client: TestClient) -> None:
         """Test that all main endpoints exist and return expected status codes."""
-        # Test endpoints that don't require database
-
-        # Upload endpoint without file returns 400/422
         response = client.post("/api/v1/upload-pdf?session_name=test")
         assert response.status_code in [400, 422]
 
-        # Session endpoint with invalid UUID returns error
         response = client.get("/api/v1/session/invalid")
         assert response.status_code in [400, 404, 422, 500]
 
-        # Hint endpoint with invalid payload returns 422
         response = client.post("/api/v1/get-socratic-hint", json={})
         assert response.status_code == 422

@@ -8,7 +8,7 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from app.api.v1.deps import get_current_user
-from app.core.database import supabase
+from app.core.database import get_supabase
 from app.services.ingestion.pdf_service import extract_text_from_pdf
 from app.services.ingestion.text_processor import chunk_text
 from app.services.ingestion.vector_service import save_chunks_to_db
@@ -90,7 +90,7 @@ async def upload_pdf(
         await asyncio.to_thread(save_chunks_to_db, chunks, source_id)
 
         with open(file_path, "rb") as f:
-            supabase.storage.from_("pdfs").upload(
+            get_supabase().storage.from_("pdfs").upload(
                 path=safe_filename, file=f, file_options={"upsert": "true"}
             )
 

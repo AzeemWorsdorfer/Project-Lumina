@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.core.database import supabase
+from app.core.database import get_supabase
 
 security = HTTPBearer(auto_error=False)
 
@@ -21,7 +21,7 @@ def get_current_user(
     token = credentials.credentials
 
     try:
-        user = supabase.auth.get_user(token)
+        user = get_supabase().auth.get_user(token)
         if not user.user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
