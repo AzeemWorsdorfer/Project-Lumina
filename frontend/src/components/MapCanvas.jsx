@@ -10,7 +10,7 @@ import {
   MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { fetchSession, saveMindMap, getSocraticHintStream } from "../services/api.js";
+import { fetchSession, saveMindMap, getSocraticHintStream, generateQuiz } from "../services/api.js";
 import { backendToReactFlow, DEFAULT_NODE_COLOR, DEFAULT_NODE_TYPE, DEFAULT_EDGE_TYPE } from "../utils/mapTransform.js";
 import { toast } from "sonner";
 import { Loader2, Check, AlertCircle } from "lucide-react";
@@ -40,7 +40,7 @@ const parseDraft = (value) => {
 
 let nodeCounter = 0;
 
-const MapCanvas = ({ sessionId, hints, onAddHint }) => {
+const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
   const { getAccessToken } = useAuth();
   const { theme } = useTheme();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -48,9 +48,11 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState("saved");
   const [isGeneratingHint, setIsGeneratingHint] = useState(false);
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [edgeSource, setEdgeSource] = useState(null);
   const debounceRef = useRef(null);
+  const reactFlowInstance = useRef(null);
 
   const historyRef = useRef({ stack: [], index: -1 });
   const MAX_HISTORY = 50;
@@ -192,18 +194,20 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
     };
   }, [nodes, edges, sessionId, saveMap, hasLoaded]);
 
-  const handleAddNode = useCallback((nodeType = DEFAULT_NODE_TYPE, color = DEFAULT_NODE_COLOR) => {
+  const handleAddNode = useCallback((nodeType = DEFAULT_NODE_TYPE, color = DEFAULT_NODE_COLOR, position = null) => {
     nodeCounter += 1;
 
-    const offsetX = 250 + (nodeCounter * 50) % 200;
-    const offsetY = 250 + (nodeCounter * 50) % 200;
+    const pos = position || {
+      x: 250 + (nodeCounter * 50) % 200,
+      y: 250 + (nodeCounter * 50) % 200,
+    };
 
     const newNode = {
       id: `node-${Date.now()}-${nodeCounter}`,
-      position: { x: offsetX, y: offsetY },
+      position: pos,
       type: nodeType,
       data: {
-        label: nodeType === "stickyNote" ? "" : "New Card",
+        label: "New Card",
         nodeType: nodeType,
         color: color,
         related_source_chunk_id: null,
@@ -398,6 +402,32 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
     }
   };
 
+  const handleGenerateQuiz = async () => {
+    if (isPlaceholderNode(nodes) || nodes.length === 0) {
+      toast.error("Add some nodes to the map first");
+      return;
+    }
+
+    setIsGeneratingQuiz(true);
+
+    try {
+      const token = await getAccessToken();
+      const quizData = await generateQuiz(sessionId, nodes, edges, token);
+      if (quizData && onAddQuiz) {
+        onAddQuiz(quizData);
+      }
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      if (error.message?.includes("401")) {
+        toast.error("Session expired. Please log in again.");
+      } else {
+        toast.error(error.message || "Failed to generate quiz");
+      }
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  };
+
   const retrySave = () => {
     saveMap(nodes, edges);
   };
@@ -439,6 +469,17 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         onEdgeClick={handleEdgeClick}
         nodeTypes={nodeTypes}
         fitView
+        zoomOnDoubleClick={false}
+        onInit={(instance) => { reactFlowInstance.current = instance; }}
+        onDoubleClick={(event) => {
+          if (event.target.closest(".react-flow__node")) return;
+          if (!reactFlowInstance.current) return;
+          const position = reactFlowInstance.current.screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+          });
+          handleAddNode(DEFAULT_NODE_TYPE, DEFAULT_NODE_COLOR, position);
+        }}
         colorMode={theme}
         proOptions={{ hideAttribution: true }}
         defaultEdgeOptions={{
@@ -469,10 +510,11 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         onGetHint={handleGetHint}
         hints={hints}
         isGeneratingHint={isGeneratingHint}
-        edgeSource={edgeSource}
-        onCancelEdge={() => setEdgeSource(null)}
         onUndo={handleUndo}
         onRedo={handleRedo}
+        onGenerateQuiz={handleGenerateQuiz}
+        quizzes={quizzes}
+        isGeneratingQuiz={isGeneratingQuiz}
       />
 
       <div className="absolute bottom-4 right-4 z-20">

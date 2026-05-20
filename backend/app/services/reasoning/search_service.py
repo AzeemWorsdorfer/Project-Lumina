@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, List, Optional
 
-from app.core.database import supabase
+from app.core.database import get_supabase
 from app.services.ingestion.vector_service import get_embeddings
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ def get_relevant_chunks(
             f"Searching for chunks related to: '{query}' in source: {source_id}"
         )
 
-        response = supabase.rpc(
+        response = get_supabase().rpc(
             "match_documents",
             {
                 "query_embedding": query_vector,
@@ -54,7 +54,7 @@ def get_relevant_chunks(
         if not response.data:
             logger.info("No results with p_source_id; attempting fallback search...")
             response = (
-                supabase.rpc(
+                get_supabase().rpc(
                     "match_documents",
                     {
                         "query_embedding": query_vector,

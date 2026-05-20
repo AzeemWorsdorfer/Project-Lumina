@@ -29,6 +29,7 @@ CREATE TABLE sources (
     user_id TEXT NOT NULL,
     file_name TEXT NOT NULL,
     page_count INTEGER NOT NULL,
+    status TEXT DEFAULT 'processed',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

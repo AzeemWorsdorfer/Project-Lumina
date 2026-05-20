@@ -1,19 +1,20 @@
 import logging
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional
 
-import ollama
+from openai import OpenAI
 
-from app.core.database import supabase
-
-EMBEDDING_MODEL = "qwen3-embedding:8b"
+from app.app.settings import settings
+from app.core.database import get_supabase
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 def get_embeddings(texts: List[str]) -> Optional[List[List[float]]]:
     """
-    Generate vectors locally using Qwen3-Embedding.
+    Generate vectors using OpenAI text-embedding-3-small.
+    Produces 1536-dimensional embeddings matching the VECTOR(1536) schema.
     """
     if not texts:
         return []
@@ -23,16 +24,14 @@ def get_embeddings(texts: List[str]) -> Optional[List[List[float]]]:
         return None
 
     try:
-
-        def get_single(text: str) -> List[float]:
-            response = ollama.embeddings(model=EMBEDDING_MODEL, prompt=text)
-            return response["embedding"]
-
-        with ThreadPoolExecutor(max_workers=8) as executor:
-            embeddings = list(executor.map(get_single, texts))
+        response = client.embeddings.create(
+            model=settings.OPENAI_EMBEDDING_MODEL,
+            input=texts,
+        )
+        embeddings = [item.embedding for item in response.data]
         return embeddings
     except Exception as e:
-        logger.error(f"Ollama Embedding Error: {e}")
+        logger.error(f"OpenAI Embedding Error: {e}")
         return None
 
 
@@ -90,7 +89,7 @@ def save_chunks_to_db(chunks: List[Dict[str, Any]], source_id: str) -> None:
 
             if rows:
                 try:
-                    supabase.table("document_sections").insert(rows).execute()
+                    get_supabase().table("document_sections").insert(rows).execute()
                     logger.info(f"Saved {min(i + batch_size, total)}/{total} chunks.")
                 except Exception as e:
                     logger.error(f"Failed to save batch to database: {e}")

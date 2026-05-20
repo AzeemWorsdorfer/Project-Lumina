@@ -1,23 +1,18 @@
+import json
 import logging
-import re
 from typing import AsyncGenerator, Dict, List
 
-import ollama
+from openai import AsyncOpenAI, OpenAI
 
+from app.app.settings import settings
 from app.schemas.mindmap import MindMapState
 from app.services.reasoning.prompt import SocraticPrompts
 from app.services.reasoning.search_service import get_relevant_chunks
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-AI_MODEL = "deepseek-r1:8b"
-
-ollama_async_client = ollama.AsyncClient()
-
-
-def _strip_thinking_tags(text: str) -> str:
-    """Remove <think>...</think> tags from DeepSeek R1 responses."""
-    return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
+async_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 async def generate_socratic_hint_streaming(
@@ -27,11 +22,11 @@ async def generate_socratic_hint_streaming(
     Generate a Socratic hint based on mind map state and source material.
     Uses async streaming to yield chunks as they're generated.
 
-    Uses a local Ollama model (deepseek-r1:8b) to generate hints by:
+    Uses an OpenAI chat model (gpt-4o-mini) to generate hints by:
     1. Validating the mind map state
     2. Retrieving relevant context from the knowledge base
     3. Building a Socratic prompt
-    4. Generating a streaming hint using the local AI model
+    4. Generating a streaming hint via the OpenAI API
     """
     try:
         if not state.nodes:
@@ -82,38 +77,15 @@ async def generate_socratic_hint_streaming(
 
         prompt = SocraticPrompts.get_hint_prompt(state, chunk_texts)
 
-        stream = await ollama_async_client.chat(
-            model=AI_MODEL, messages=[{"role": "user", "content": prompt}], stream=True
+        stream = await async_client.chat.completions.create(
+            model=settings.OPENAI_CHAT_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            stream=True,
         )
 
-        # DeepSeek R1 outputs <think>...</think> before the actual response
-        # Buffer until thinking block closes, then yield response content
-        in_thinking = False
-        buffer = ""
-
         async for chunk in stream:
-            content = chunk["message"]["content"]
-            if not content:
-                continue
-
-            buffer += content
-
-            # Check for thinking tag start
-            if "<think>" in buffer:
-                in_thinking = True
-
-            # Check for thinking tag end
-            if in_thinking and "</think>" in buffer:
-                # Remove everything up to and including the closing tag
-                buffer = buffer.split("</think>", 1)[1]
-                in_thinking = False
-                if buffer.strip():
-                    yield buffer
-                buffer = ""
-                continue
-
-            # If not in thinking block, yield content directly
-            if not in_thinking:
+            content = chunk.choices[0].delta.content
+            if content:
                 yield content
 
     except ValueError as e:
@@ -179,15 +151,15 @@ def generate_socratic_hint(state: MindMapState, source_id: str) -> str:
 
         prompt = SocraticPrompts.get_hint_prompt(state, chunk_texts)
 
-        response = ollama.chat(
-            model=AI_MODEL,
+        response = client.chat.completions.create(
+            model=settings.OPENAI_CHAT_MODEL,
             messages=[{"role": "user", "content": prompt}],
         )
 
-        content = response["message"]["content"]
+        content = response.choices[0].message.content
         if not content:
             content = "I couldn't generate a hint at this time."
-        return _strip_thinking_tags(content)
+        return content
 
     except ValueError as e:
         logger.warning(f"Invalid input in generate_socratic_hint: {e}")
@@ -198,3 +170,83 @@ def generate_socratic_hint(state: MindMapState, source_id: str) -> str:
             "I'm having a bit of trouble analyzing the textbook right now. "
             "Can you try adding one more connection?"
         )
+
+
+def generate_quiz(state: MindMapState, source_id: str) -> Dict:
+    """Generate a 3-question multiple-choice quiz from source material."""
+
+    try:
+        if not state.nodes:
+            raise ValueError("Mind map cannot be empty")
+
+        search_query = state.nodes[-1].label
+        if not search_query.strip():
+            raise ValueError("Node label cannot be empty")
+
+        context_chunks_response = get_relevant_chunks(
+            search_query.strip(), source_id, limit=5
+        )
+
+        if not context_chunks_response:
+            logger.warning(
+                f"No context found for query: {search_query} in source: {source_id}"
+            )
+            raise RuntimeError("No relevant source material found")
+
+        chunk_texts: List[str] = []
+        if isinstance(context_chunks_response, list):
+            for chunk in context_chunks_response:
+                if isinstance(chunk, Dict):
+                    content = chunk.get("content")
+                    if isinstance(content, str):
+                        chunk_texts.append(content)
+                elif isinstance(chunk, str):
+                    chunk_texts.append(chunk)
+
+        if not chunk_texts:
+            logger.warning(
+                f"No valid text content found in context chunks "
+                f"for query: {search_query}"
+            )
+            raise RuntimeError("No valid source content found")
+
+        nodes_list = ", ".join([n.label for n in state.nodes if n.label.strip()])
+        edges_list = ", ".join(
+            [f"{e.source} -> {e.target} ({e.label})" for e in state.edges if e.label]
+        )
+
+        prompt = SocraticPrompts.get_quiz_prompt(nodes_list, edges_list, chunk_texts)
+
+        response = client.chat.completions.create(
+            model=settings.OPENAI_CHAT_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+        )
+
+        content = response.choices[0].message.content
+        if not content:
+            raise RuntimeError("Failed to generate quiz")
+
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+            content = content.strip()
+
+        quiz_data = json.loads(content)
+
+        if "questions" not in quiz_data or not isinstance(quiz_data["questions"], list):
+            raise RuntimeError("Invalid quiz format")
+
+        return quiz_data
+
+    except (ValueError, RuntimeError) as e:
+        logger.warning(f"Quiz generation error: {e}")
+        raise
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse quiz JSON: {e}")
+        raise RuntimeError("Failed to parse quiz response")
+    except Exception as e:
+        logger.error(f"Quiz generation failure: {e}")
+        raise RuntimeError("Failed to generate quiz")

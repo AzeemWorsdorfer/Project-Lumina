@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -35,11 +36,6 @@ export function AuthProvider({ children }) {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-  };
-
-  const getSession = async () => {
-    const { data } = await supabase.auth.getSession();
-    return data.session;
   };
 
   const getAccessToken = async () => {

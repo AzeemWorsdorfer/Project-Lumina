@@ -56,3 +56,51 @@ Based on these sections: {textbook_context}
 What is the most complex sub-component of '{node_label}' they should add next?
 Ask a question that guides them to it.
 """
+
+    @staticmethod
+    def get_quiz_prompt(
+        nodes_list: str,
+        edges_list: str,
+        context_chunks: List[str],
+    ) -> str:
+        """Constructs a prompt that generates a 3-question multiple-choice quiz."""
+        textbook_context = "\n".join(context_chunks)
+
+        return f"""
+You are an expert educator creating a lightweight quiz based on study material.
+
+SOURCE MATERIAL:
+---
+{textbook_context}
+---
+
+USER'S MIND MAP TOPICS:
+- Concepts: {nodes_list}
+- Connections: {edges_list}
+
+TASK:
+Generate exactly 3 multiple-choice questions testing understanding of key
+concepts from the source material.
+
+RESPONSE FORMAT:
+Return ONLY valid JSON with this exact structure. No markdown, no
+explanation, no code fences:
+{{
+  "questions": [
+    {{
+      "question": "The question text",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_index": 0,
+      "explanation": "Brief explanation of why the answer is correct"
+    }}
+  ]
+}}
+
+RULES:
+- Questions should cover different concepts from the source material
+- Each question must have exactly 4 options
+- correct_index must be 0, 1, 2, or 3
+- Options should be plausible (not obviously wrong)
+- Explanations should be 1-2 sentences
+- Do NOT include any text outside the JSON object
+"""

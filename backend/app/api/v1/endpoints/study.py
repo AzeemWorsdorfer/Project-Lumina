@@ -6,9 +6,11 @@ from fastapi.responses import StreamingResponse
 from pydantic import UUID4
 
 from app.api.v1.deps import get_current_user
-from app.core.database import supabase
+from app.core.database import get_supabase
+from app.core.rate_limiter import rate_limiter
 from app.schemas.mindmap import MindMapState, SocraticHint
 from app.services.reasoning.ai_service import (
+    generate_quiz,
     generate_socratic_hint,
     generate_socratic_hint_streaming,
 )
@@ -24,7 +26,7 @@ async def list_sessions(current_user: dict = Depends(get_current_user)):
     user_id = current_user.get("id")
     try:
         result = (
-            supabase.table("study_sessions")
+            get_supabase().table("study_sessions")
             .select("id", "name", "created_at", "sources(file_name)")
             .eq("user_id", user_id)
             .order("created_at", desc=True)
@@ -61,7 +63,7 @@ async def get_session(
             raise ValueError("Session ID cannot be empty")
 
         result = (
-            supabase.table("study_sessions")
+            get_supabase().table("study_sessions")
             .select("*, sources(*)")
             .eq("id", session_id.strip())
             .eq("user_id", user_id)
@@ -93,7 +95,7 @@ async def save_map(
     user_id = current_user.get("id")
     try:
         session_check = (
-            supabase.table("study_sessions")
+            get_supabase().table("study_sessions")
             .select("id")
             .eq("id", str(session_id))
             .eq("user_id", user_id)
@@ -111,7 +113,7 @@ async def save_map(
         }
 
         result = (
-            supabase.table("study_sessions")
+            get_supabase().table("study_sessions")
             .update({"mind_map_data": map_data})
             .eq("id", str(session_id))
             .execute()
@@ -140,9 +142,19 @@ async def get_hint(
 ) -> SocraticHint:
     """Generate a Socratic hint based on the current mind map state."""
     user_id = current_user.get("id")
+
+    if not rate_limiter.check(f"hint:{user_id}"):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                "Rate limit exceeded. Maximum 10 requests per minute. "
+                "Please wait before trying again."
+            ),
+        )
+
     try:
         session_data = (
-            supabase.table("study_sessions")
+            get_supabase().table("study_sessions")
             .select("source_id")
             .eq("id", str(payload.session_id))
             .eq("user_id", user_id)
@@ -184,9 +196,19 @@ async def get_hint_stream(
 ):
     """Generate a Socratic hint with streaming response."""
     user_id = current_user.get("id")
+
+    if not rate_limiter.check(f"hint-stream:{user_id}"):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                "Rate limit exceeded. Maximum 10 requests per minute. "
+                "Please wait before trying again."
+            ),
+        )
+
     try:
         session_data = (
-            supabase.table("study_sessions")
+            get_supabase().table("study_sessions")
             .select("source_id")
             .eq("id", str(payload.session_id))
             .eq("user_id", user_id)
@@ -238,6 +260,66 @@ async def get_hint_stream(
         )
 
 
+@router.post("/generate-quiz")
+async def create_quiz(
+    payload: MindMapState, current_user: dict = Depends(get_current_user)
+):
+    """Generate a 3-question multiple-choice quiz from source material."""
+    user_id = current_user.get("id")
+
+    if not rate_limiter.check(f"quiz:{user_id}"):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                "Rate limit exceeded. Maximum 10 requests per minute. "
+                "Please wait before trying again."
+            ),
+        )
+
+    try:
+        session_data = (
+            get_supabase().table("study_sessions")
+            .select("source_id")
+            .eq("id", str(payload.session_id))
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute()
+        )
+
+        if not session_data.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Study session not found"
+            )
+
+        actual_source_id = session_data.data["source_id"]
+
+        if not payload.nodes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Mind map cannot be empty",
+            )
+
+        quiz_data = generate_quiz(payload, actual_source_id)
+
+        return quiz_data
+
+    except ValueError as e:
+        logger.warning(f"Invalid input in generate_quiz: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except RuntimeError as e:
+        logger.warning(f"Quiz generation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+    except Exception as e:
+        logger.error(f"Error in generate_quiz: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}",
+        )
+
+
 @router.delete("/session/{session_id}")
 async def delete_session(
     session_id: str, current_user: dict = Depends(get_current_user)
@@ -246,7 +328,7 @@ async def delete_session(
     user_id = current_user.get("id")
     try:
         session_res = (
-            supabase.table("study_sessions")
+            get_supabase().table("study_sessions")
             .select("source_id")
             .eq("id", session_id)
             .eq("user_id", user_id)
@@ -262,14 +344,14 @@ async def delete_session(
         source_id = session_res.data[0].get("source_id")
 
         if source_id:
-            supabase.table("document_sections").delete().eq(
+            get_supabase().table("document_sections").delete().eq(
                 "source_id", source_id
             ).execute()
 
-        supabase.table("study_sessions").delete().eq("id", session_id).execute()
+        get_supabase().table("study_sessions").delete().eq("id", session_id).execute()
 
         if source_id:
-            supabase.table("sources").delete().eq("id", source_id).execute()
+            get_supabase().table("sources").delete().eq("id", source_id).execute()
 
         return {"status": "success", "message": f"Session {session_id} deleted."}
     except HTTPException:
@@ -290,7 +372,7 @@ async def get_pdf_signed_url(
     user_id = current_user.get("id")
     try:
         res = (
-            supabase.table("study_sessions")
+            get_supabase().table("study_sessions")
             .select("sources(file_name)")
             .eq("id", session_id)
             .eq("user_id", user_id)
@@ -300,12 +382,15 @@ async def get_pdf_signed_url(
         if not res.data or not res.data.get("sources"):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="PDF source not found for this session. Check if the session has a source_id.",
+                detail=(
+                    "PDF source not found for this session. "
+                    "Check if the session has a source_id."
+                ),
             )
 
         file_name = res.data["sources"]["file_name"]
 
-        url_result = supabase.storage.from_("pdfs").create_signed_url(
+        url_result = get_supabase().storage.from_("pdfs").create_signed_url(
             path=file_name, expires_in=3600
         )
 

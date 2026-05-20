@@ -23,7 +23,7 @@ async function authFetch(url, options = {}, token = null) {
 
 const DEFAULT_NODE_TYPE = "textCard";
 const DEFAULT_NODE_COLOR = "#fbbf24";
-const DEFAULT_EDGE_TYPE = "smoothstep";
+const DEFAULT_EDGE_TYPE = "default";
 const DEFAULT_EDGE_COLOR = "#64748b";
 
 const nodeToBackend = (node) => ({
@@ -167,4 +167,27 @@ export const getSocraticHintStream = async (sessionId, nodes, edges, onChunk, to
   }
 
   return fullResponse;
+};
+
+export const generateQuiz = async (sessionId, nodes, edges, token = null) => {
+  const backendNodes = nodes.map(nodeToBackend);
+  const backendEdges = edges.map(edgeToBackend);
+
+  const response = await authFetch(
+    `${API_BASE_URL}/api/v1/generate-quiz`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+        nodes: backendNodes,
+        edges: backendEdges,
+      }),
+    },
+    token
+  );
+
+  return response.json();
 };
