@@ -115,13 +115,6 @@ Lumina/
         └── utils/                # Utilities
 ```
 
-## Future Roadmap
-
-- [x] Quiz Generator — Auto-generate quizzes from mind maps
-- [x] Timed Pomodoro Study Sessions
-- [x] Enhanced Mind Mapping Capabilities
-- [x] Light Mode
-
 ## Contact
 
 - [LinkedIn](https://www.linkedin.com/in/muhammad-azeem-worsdorfer)
