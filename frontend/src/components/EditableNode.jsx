@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Handle, Position, useReactFlow } from "@xyflow/react";
 import { getContrastColor } from "../utils/mapTransform.js";

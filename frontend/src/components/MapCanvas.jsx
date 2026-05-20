@@ -10,7 +10,7 @@ import {
   MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { fetchSession, saveMindMap, getSocraticHintStream } from "../services/api.js";
+import { fetchSession, saveMindMap, getSocraticHintStream, generateQuiz } from "../services/api.js";
 import { backendToReactFlow, DEFAULT_NODE_COLOR, DEFAULT_NODE_TYPE, DEFAULT_EDGE_TYPE } from "../utils/mapTransform.js";
 import { toast } from "sonner";
 import { Loader2, Check, AlertCircle } from "lucide-react";
@@ -40,7 +40,7 @@ const parseDraft = (value) => {
 
 let nodeCounter = 0;
 
-const MapCanvas = ({ sessionId, hints, onAddHint }) => {
+const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
   const { getAccessToken } = useAuth();
   const { theme } = useTheme();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -48,6 +48,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState("saved");
   const [isGeneratingHint, setIsGeneratingHint] = useState(false);
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [edgeSource, setEdgeSource] = useState(null);
   const debounceRef = useRef(null);
@@ -401,6 +402,32 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
     }
   };
 
+  const handleGenerateQuiz = async () => {
+    if (isPlaceholderNode(nodes) || nodes.length === 0) {
+      toast.error("Add some nodes to the map first");
+      return;
+    }
+
+    setIsGeneratingQuiz(true);
+
+    try {
+      const token = await getAccessToken();
+      const quizData = await generateQuiz(sessionId, nodes, edges, token);
+      if (quizData && onAddQuiz) {
+        onAddQuiz(quizData);
+      }
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      if (error.message?.includes("401")) {
+        toast.error("Session expired. Please log in again.");
+      } else {
+        toast.error(error.message || "Failed to generate quiz");
+      }
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  };
+
   const retrySave = () => {
     saveMap(nodes, edges);
   };
@@ -485,6 +512,9 @@ const MapCanvas = ({ sessionId, hints, onAddHint }) => {
         isGeneratingHint={isGeneratingHint}
         onUndo={handleUndo}
         onRedo={handleRedo}
+        onGenerateQuiz={handleGenerateQuiz}
+        quizzes={quizzes}
+        isGeneratingQuiz={isGeneratingQuiz}
       />
 
       <div className="absolute bottom-4 right-4 z-20">

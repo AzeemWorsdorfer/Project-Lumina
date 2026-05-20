@@ -168,3 +168,26 @@ export const getSocraticHintStream = async (sessionId, nodes, edges, onChunk, to
 
   return fullResponse;
 };
+
+export const generateQuiz = async (sessionId, nodes, edges, token = null) => {
+  const backendNodes = nodes.map(nodeToBackend);
+  const backendEdges = edges.map(edgeToBackend);
+
+  const response = await authFetch(
+    `${API_BASE_URL}/api/v1/generate-quiz`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+        nodes: backendNodes,
+        edges: backendEdges,
+      }),
+    },
+    token
+  );
+
+  return response.json();
+};
