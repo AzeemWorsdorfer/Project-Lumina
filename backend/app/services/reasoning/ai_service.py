@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import AsyncGenerator, Dict, List
 
@@ -169,3 +170,83 @@ def generate_socratic_hint(state: MindMapState, source_id: str) -> str:
             "I'm having a bit of trouble analyzing the textbook right now. "
             "Can you try adding one more connection?"
         )
+
+
+def generate_quiz(state: MindMapState, source_id: str) -> Dict:
+    """Generate a 3-question multiple-choice quiz from source material."""
+
+    try:
+        if not state.nodes:
+            raise ValueError("Mind map cannot be empty")
+
+        search_query = state.nodes[-1].label
+        if not search_query.strip():
+            raise ValueError("Node label cannot be empty")
+
+        context_chunks_response = get_relevant_chunks(
+            search_query.strip(), source_id, limit=5
+        )
+
+        if not context_chunks_response:
+            logger.warning(
+                f"No context found for query: {search_query} in source: {source_id}"
+            )
+            raise RuntimeError("No relevant source material found")
+
+        chunk_texts: List[str] = []
+        if isinstance(context_chunks_response, list):
+            for chunk in context_chunks_response:
+                if isinstance(chunk, Dict):
+                    content = chunk.get("content")
+                    if isinstance(content, str):
+                        chunk_texts.append(content)
+                elif isinstance(chunk, str):
+                    chunk_texts.append(chunk)
+
+        if not chunk_texts:
+            logger.warning(
+                f"No valid text content found in context chunks "
+                f"for query: {search_query}"
+            )
+            raise RuntimeError("No valid source content found")
+
+        nodes_list = ", ".join([n.label for n in state.nodes if n.label.strip()])
+        edges_list = ", ".join(
+            [f"{e.source} -> {e.target} ({e.label})" for e in state.edges if e.label]
+        )
+
+        prompt = SocraticPrompts.get_quiz_prompt(nodes_list, edges_list, chunk_texts)
+
+        response = client.chat.completions.create(
+            model=settings.OPENAI_CHAT_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+        )
+
+        content = response.choices[0].message.content
+        if not content:
+            raise RuntimeError("Failed to generate quiz")
+
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+            content = content.strip()
+
+        quiz_data = json.loads(content)
+
+        if "questions" not in quiz_data or not isinstance(quiz_data["questions"], list):
+            raise RuntimeError("Invalid quiz format")
+
+        return quiz_data
+
+    except (ValueError, RuntimeError) as e:
+        logger.warning(f"Quiz generation error: {e}")
+        raise
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse quiz JSON: {e}")
+        raise RuntimeError("Failed to parse quiz response")
+    except Exception as e:
+        logger.error(f"Quiz generation failure: {e}")
+        raise RuntimeError("Failed to generate quiz")
