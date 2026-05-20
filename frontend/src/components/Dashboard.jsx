@@ -20,13 +20,22 @@ export default function Dashboard() {
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
   const [sessionHints, setSessionHints] = useState({});
+  const [sessionQuizzes, setSessionQuizzes] = useState({});
 
   const getHints = () => sessionHints[activeSessionId] || [];
+  const getQuizzes = () => sessionQuizzes[activeSessionId] || [];
 
   const handleAddHint = (hint) => {
     setSessionHints((prev) => ({
       ...prev,
       [activeSessionId]: [...(prev[activeSessionId] || []), hint],
+    }));
+  };
+
+  const handleAddQuiz = (quiz) => {
+    setSessionQuizzes((prev) => ({
+      ...prev,
+      [activeSessionId]: [...(prev[activeSessionId] || []), quiz],
     }));
   };
 
@@ -108,7 +117,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchSessions();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSelectSession = (id) => {
     console.log("Switching to session:", id);
@@ -206,6 +215,8 @@ export default function Dashboard() {
               sessionId={activeSessionId}
               hints={getHints()}
               onAddHint={handleAddHint}
+              quizzes={getQuizzes()}
+              onAddQuiz={handleAddQuiz}
             />
             <PomodoroTimer />
           </>

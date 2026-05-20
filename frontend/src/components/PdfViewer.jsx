@@ -4,7 +4,7 @@ import { X, Minus, Maximize2, FileText, Loader2, ChevronLeft, ChevronRight } fro
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@5.4.296/build/pdf.worker.min.mjs`;
 
 const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initialSize = { width: 600, height: 700 } }) => {
   const [position, setPosition] = useState(initialPosition);
