@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 from openai import OpenAI
 
 from app.app.settings import settings
-from app.core.database import supabase
+from app.core.database import get_supabase
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ def save_chunks_to_db(chunks: List[Dict[str, Any]], source_id: str) -> None:
 
             if rows:
                 try:
-                    supabase.table("document_sections").insert(rows).execute()
+                    get_supabase().table("document_sections").insert(rows).execute()
                     logger.info(f"Saved {min(i + batch_size, total)}/{total} chunks.")
                 except Exception as e:
                     logger.error(f"Failed to save batch to database: {e}")

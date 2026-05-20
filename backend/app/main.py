@@ -1,3 +1,5 @@
+import os
+
 from typing import Dict
 
 from fastapi import FastAPI
@@ -7,9 +9,13 @@ from app.api.v1.endpoints import auth, ingestion, study
 
 app: FastAPI = FastAPI(title="Lumina API")
 
+allowed_origins = os.getenv(
+    "ALLOWED_ORIGINS", "http://localhost:5173"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite dev server
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

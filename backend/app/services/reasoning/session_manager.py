@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, Optional
 
-from app.core.database import supabase
+from app.core.database import get_supabase
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def initialize_source(file_name: str, page_count: int, user_id: str) -> Optional
             "status": "processed",
             "user_id": user_id,
         }
-        result = supabase.table("sources").insert(data).execute()
+        result = get_supabase().table("sources").insert(data).execute()
 
         if not result.data or len(result.data) == 0:
             logger.error("No data returned from source insertion")
@@ -66,7 +66,7 @@ def create_session(
             "user_id": user_id,
             "mind_map_data": {"nodes": [], "edges": []},
         }
-        result = supabase.table("study_sessions").insert(data).execute()
+        result = get_supabase().table("study_sessions").insert(data).execute()
 
         if not result.data or len(result.data) == 0:
             logger.error("No data returned from session creation")
