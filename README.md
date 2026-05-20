@@ -29,17 +29,23 @@ This project demonstrates full-stack development skills, AI/ML integration, and 
 
 ## Screenshots
 
-### Main Application
-![Main App](screenshots/main-app.png)
-
-### Mind Map with AI Socratic Guidance
-![Socratic AI](screenshots/socratic-ai.png)
+### Authentication
+![Login](screenshots/login.png)
 
 ### Dashboard
 ![Dashboard](screenshots/dashboard.png)
 
-### Authentication
-![Login](screenshots/login.png)
+### Mind Map Editor
+![Mind Map](screenshots/mind-map.png)
+
+### Socratic Hints
+![Socratic AI](screenshots/socratic-ai.png)
+
+### Quiz Generator
+![Quiz](screenshots/quiz.png)
+
+### Pomodoro Timer
+![Pomodoro](screenshots/pomodoro.png)
 
 ## Technical Highlights
 

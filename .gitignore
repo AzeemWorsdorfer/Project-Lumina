@@ -25,6 +25,7 @@ Thumbs.db
 # Project Specific
 *.pdf
 uploads/
+AGENTS.md
 
 # React/Javascript
 node_modules/
