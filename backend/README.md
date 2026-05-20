@@ -6,7 +6,7 @@ FastAPI backend for the Lumina Socratic mind mapping application.
 
 - Python 3.13+
 - [uv](https://github.com/astral-sh/uv) package manager
-- Ollama running locally with `deepseek-r1:8b` model
+- OpenAI API key (GPT-4o-mini for chat, text-embedding-3-small for embeddings)
 - Supabase project (PostgreSQL + pgvector)
 
 ## Setup
@@ -19,7 +19,7 @@ uv sync
 2. Configure environment variables in `.env`:
 ```bash
 cp .env.example .env
-# Edit .env with your Supabase credentials
+# Edit .env with your Supabase and OpenAI credentials
 ```
 
 3. Set up the database:
@@ -40,6 +40,11 @@ The API will be available at `http://localhost:8000`. API docs at `http://localh
 |----------|-------------|
 | `SUPABASE_URL` | Your Supabase project URL |
 | `SUPABASE_KEY` | Your Supabase service role key |
+| `OPENAI_API_KEY` | Your OpenAI API key (sk-...) |
+| `OPENAI_CHAT_MODEL` | Chat model (default: gpt-4o-mini) |
+| `OPENAI_EMBEDDING_MODEL` | Embedding model (default: text-embedding-3-small) |
+| `OPENAI_RATE_LIMIT_RPM` | Rate limit per user (default: 10) |
+| `OPENAI_MONTHLY_LIMIT_USD` | Monthly spending cap in USD (default: 5) |
 
 ## API Endpoints
 
@@ -59,6 +64,7 @@ The API will be available at `http://localhost:8000`. API docs at `http://localh
 - `PUT /api/v1/{session_id}/map` - Save mind map state
 - `POST /api/v1/get-socratic-hint` - Get Socratic hint
 - `POST /api/v1/get-socratic-hint-stream` - Get streaming Socratic hint
+- `POST /api/v1/generate-quiz` - Generate 3-question multiple-choice quiz
 
 ## Project Structure
 
@@ -116,9 +122,8 @@ uv run ruff check .
 
 ## AI Models
 
-Uses [Ollama](https://ollama.ai/) with the `deepseek-r1:8b` model for Socratic hint generation.
+Uses OpenAI API with:
+- **GPT-4o-mini** — For Socratic hint generation and quiz creation
+- **text-embedding-3-small** — For vector embeddings and semantic search
 
-Install Ollama and pull the model:
-```bash
-ollama pull deepseek-r1:8b
-```
+Set a $5/month hard limit in [OpenAI Dashboard → Billing → Usage limits](https://platform.openai.com/usage-limits).

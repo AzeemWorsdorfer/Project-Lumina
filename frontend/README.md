@@ -42,6 +42,9 @@ The app will be available at `http://localhost:5173`.
 - **Mind Map Editor** — Interactive node-based visualization with ReactFlow
 - **PDF Viewer** — Side-by-side document viewing
 - **Socratic Hints** — AI-powered learning guidance
+- **Quiz Generator** — Auto-generate 3-question multiple-choice quizzes from mind maps
+- **Quiz Modal** — Interactive quiz interface with answer feedback
+- **Pomodoro Timer** — Timed study sessions with visual countdown
 - **Session Management** — Create, save, and resume study sessions
 - **User Authentication** — Supabase Auth integration
 - **Light / Dark Mode** — Full theme system with toggle, localStorage persistence, and system preference detection. All components adapt via CSS custom properties and semantic theme tokens.

@@ -23,7 +23,9 @@ This project demonstrates full-stack development skills, AI/ML integration, and 
 - **PDF Upload** — Ingest textbooks and papers with semantic chunking
 - **Mind Map Editor** — Interactive concept mapping with ReactFlow
 - **Socratic Hints** — AI-powered questions to guide learning when stuck
+- **Quiz Generator** — Auto-generate 3-question multiple-choice quizzes from study material
 - **Gap Analysis** — Identifies missed relationships and misconceptions
+- **Pomodoro Timer** — Timed study sessions for focused learning
 
 ## Screenshots
 
@@ -42,9 +44,10 @@ This project demonstrates full-stack development skills, AI/ML integration, and 
 ## Technical Highlights
 
 - **RAG Pipeline** — Vector similarity search with pgvector for semantic retrieval
-- **Local LLM** — Ollama integration for privacy-first, zero API-cost AI
+- **OpenAI Integration** — GPT-4o-mini for Socratic reasoning, text-embedding-3-small for embeddings
 - **Full-Stack Architecture** — React frontend + FastAPI backend
 - **Real-Time Gap Detection** — Algorithm that surfaces knowledge blind spots
+- **Rate Limiting** — 10 requests/minute per user (configurable) with $5/month spending cap
 
 ## Tech Stack
 
@@ -53,7 +56,7 @@ This project demonstrates full-stack development skills, AI/ML integration, and 
 | Frontend | React 19 + Vite + ReactFlow |
 | Backend | FastAPI (Python 3.13) |
 | Database | Supabase (PostgreSQL + pgvector) |
-| AI | Ollama (deepseek-r1:8b) |
+| AI | OpenAI (GPT-4o-mini + text-embedding-3-small) |
 
 ## Getting Started
 
@@ -73,11 +76,16 @@ npm install
 npm run dev
 ```
 
-### 3. Ollama
+### 3. Environment Setup
 
+Create a `.env` file in the `backend/` directory with:
 ```bash
-ollama pull deepseek-r1:8b
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
+OPENAI_API_KEY=sk-...
 ```
+
+Set a $5/month hard limit in [OpenAI Dashboard → Billing → Usage limits](https://platform.openai.com/usage-limits).
 
 ## Project Structure
 
@@ -109,6 +117,7 @@ Lumina/
 
 ## Future Roadmap
 
+- [x] Quiz Generator — Auto-generate quizzes from mind maps
 - [x] Timed Pomodoro Study Sessions
 - [x] Enhanced Mind Mapping Capabilities
 - [x] Light Mode
