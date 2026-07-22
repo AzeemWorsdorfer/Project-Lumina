@@ -11,7 +11,7 @@ export default function LoginPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     try {
@@ -19,7 +19,7 @@ export default function LoginPage() {
       toast.success("Welcome back!");
       navigate("/app");
     } catch (error) {
-      toast.error(error.message || "Failed to sign in");
+      toast.error((error as Error).message || "Failed to sign in");
     } finally {
       setIsLoading(false);
     }

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ReactFlow,
   MiniMap,
@@ -8,29 +8,49 @@ import {
   useEdgesState,
   addEdge,
   MarkerType,
+  type Connection,
+  type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { fetchSession, saveMindMap, getSocraticHintStream, generateQuiz } from "../services/api.js";
-import { backendToReactFlow, DEFAULT_NODE_COLOR, DEFAULT_NODE_TYPE, DEFAULT_EDGE_TYPE } from "../utils/mapTransform.js";
+import { fetchSession, saveMindMap, getSocraticHintStream, generateQuiz } from "../services/api";
+import { backendToReactFlow, DEFAULT_NODE_COLOR, DEFAULT_NODE_TYPE, DEFAULT_EDGE_TYPE } from "../utils/mapTransform";
 import { toast } from "sonner";
 import { Loader2, Check, AlertCircle } from "lucide-react";
 import Toolbar from "./Toolbar";
 import EditableNode from "./EditableNode";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
-import useKeyboardShortcuts from "../hooks/useKeyboardShortcuts.js";
+import useKeyboardShortcuts from "../hooks/useKeyboardShortcuts";
+import type { MindMapNode, MindMapEdge, MindMapNodeData } from "../types";
 
 const nodeTypes = { textCard: EditableNode, stickyNote: EditableNode };
-const initialNodes = [];
-const initialEdges = [];
 
-const isPlaceholderNode = (nodes) => {
+const initialNodes: MindMapNode[] = [];
+const initialEdges: MindMapEdge[] = [];
+
+type SaveStatus = "saved" | "saving" | "error";
+
+interface MapSnapshot {
+  nodes: MindMapNode[];
+  edges: MindMapEdge[];
+}
+
+interface MapCanvasProps {
+  sessionId: string;
+  hints: string[];
+  onAddHint: (hint: string) => void;
+  quizzes: unknown[];
+  onAddQuiz: (quiz: unknown) => void;
+}
+
+const isPlaceholderNode = (nodes: MindMapNode[]): boolean => {
   return nodes.length === 1 && nodes[0]?.data?.label === "Select a Session";
 };
 
-const getDraftKey = (sessionId) => `lumina-mindmap-draft-${sessionId}`;
+const getDraftKey = (sessionId: string): string => `lumina-mindmap-draft-${sessionId}`;
 
-const parseDraft = (value) => {
+const parseDraft = (value: string | null): { nodes: MindMapNode[]; edges: MindMapEdge[] } | null => {
+  if (!value) return null;
   try {
     return JSON.parse(value);
   } catch {
@@ -40,28 +60,28 @@ const parseDraft = (value) => {
 
 let nodeCounter = 0;
 
-const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
+const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }: MapCanvasProps) => {
   const { getAccessToken } = useAuth();
   const { theme } = useTheme();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<MindMapNodeData>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [isLoading, setIsLoading] = useState(false);
-  const [saveStatus, setSaveStatus] = useState("saved");
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [isGeneratingHint, setIsGeneratingHint] = useState(false);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [edgeSource, setEdgeSource] = useState(null);
-  const debounceRef = useRef(null);
-  const reactFlowInstance = useRef(null);
+  const [edgeSource, setEdgeSource] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
 
-  const historyRef = useRef({ stack: [], index: -1 });
+  const historyRef = useRef<{ stack: MapSnapshot[]; index: number }>({ stack: [], index: -1 });
   const MAX_HISTORY = 50;
   const isUndoingRedoing = useRef(false);
 
   const takeSnapshot = useCallback(() => {
     if (isUndoingRedoing.current) return;
     const { stack, index } = historyRef.current;
-    const snapshot = {
+    const snapshot: MapSnapshot = {
       nodes: JSON.parse(JSON.stringify(nodes)),
       edges: JSON.parse(JSON.stringify(edges)),
     };
@@ -93,7 +113,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
     setTimeout(() => { isUndoingRedoing.current = false; }, 0);
   }, [setNodes, setEdges]);
 
-  const loadSession = useCallback(async (id) => {
+  const loadSession = useCallback(async (id: string) => {
     if (!id) return;
 
     setIsLoading(true);
@@ -105,11 +125,11 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
       const session = await fetchSession(id, token);
 
       const draft = parseDraft(localStorage.getItem(getDraftKey(id)));
-      const hasDraft = draft?.nodes?.length > 0 || draft?.edges?.length > 0;
+      const hasDraft = draft?.nodes && draft.nodes.length > 0 || (draft?.edges && draft.edges.length > 0);
 
       if (hasDraft) {
-        setNodes(draft.nodes || initialNodes);
-        setEdges(draft.edges || initialEdges);
+        setNodes(draft!.nodes || initialNodes);
+        setEdges(draft!.edges || initialEdges);
       } else if (session.mind_map_data && session.mind_map_data.nodes?.length > 0) {
         const { nodes: savedNodes, edges: savedEdges } = backendToReactFlow(
           session.mind_map_data
@@ -123,7 +143,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
       setSaveStatus("saved");
     } catch (error) {
       console.error("Error loading session:", error);
-      if (error.message?.includes("401")) {
+      if ((error as Error).message?.includes("401")) {
         toast.error("Session expired. Please log in again.");
       } else {
         toast.error("Failed to load session data");
@@ -143,7 +163,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
     }
   }, [sessionId, loadSession]);
 
-  const saveMap = useCallback(async (currentNodes, currentEdges) => {
+  const saveMap = useCallback(async (currentNodes: MindMapNode[], currentEdges: MindMapEdge[]) => {
     if (!sessionId || !hasLoaded) return;
     if (currentNodes.length === 0) return;
 
@@ -156,7 +176,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
       setSaveStatus("saved");
     } catch (error) {
       console.error("Error saving map:", error);
-      if (error.message?.includes("401")) {
+      if ((error as Error).message?.includes("401")) {
         setSaveStatus("error");
         toast.error("Session expired. Please log in again.");
       } else {
@@ -194,7 +214,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
     };
   }, [nodes, edges, sessionId, saveMap, hasLoaded]);
 
-  const handleAddNode = useCallback((nodeType = DEFAULT_NODE_TYPE, color = DEFAULT_NODE_COLOR, position = null) => {
+  const handleAddNode = useCallback((nodeType: string = DEFAULT_NODE_TYPE, color: string = DEFAULT_NODE_COLOR, position: { x: number; y: number } | null = null) => {
     nodeCounter += 1;
 
     const pos = position || {
@@ -202,7 +222,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
       y: 250 + (nodeCounter * 50) % 200,
     };
 
-    const newNode = {
+    const newNode: MindMapNode = {
       id: `node-${Date.now()}-${nodeCounter}`,
       position: pos,
       type: nodeType,
@@ -225,7 +245,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
       return;
     }
     nodeCounter += 1;
-    const childNode = {
+    const childNode: MindMapNode = {
       id: `node-${Date.now()}-${nodeCounter}`,
       type: DEFAULT_NODE_TYPE,
       position: {
@@ -239,7 +259,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
         related_source_chunk_id: null,
       },
     };
-    const childEdge = {
+    const childEdge: MindMapEdge = {
       id: `edge-${Date.now()}-${nodeCounter}`,
       source: selected.id,
       target: childNode.id,
@@ -258,7 +278,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
       return;
     }
     nodeCounter += 1;
-    const siblingNode = {
+    const siblingNode: MindMapNode = {
       id: `node-${Date.now()}-${nodeCounter}`,
       type: DEFAULT_NODE_TYPE,
       position: {
@@ -299,10 +319,10 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
   }, [setNodes, setEdges, edgeSource]);
 
   const onConnect = useCallback(
-    (params) => {
+    (params: Connection) => {
       const newEdge = {
         ...params,
-        type: DEFAULT_EDGE_TYPE,
+        type: DEFAULT_EDGE_TYPE as const,
         markerEnd: {
           type: MarkerType.ArrowClosed,
           width: 15,
@@ -330,7 +350,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
     setEdges((eds) => eds.filter((edge) => !edge.selected));
   }, [setNodes, setEdges, nodes, edges, takeSnapshot]);
 
-  const handleNodeClick = useCallback((event, node) => {
+  const handleNodeClick = useCallback((event: React.MouseEvent, node: MindMapNode) => {
     if (event.shiftKey) {
       if (edgeSource === null) {
         setEdgeSource(node.id);
@@ -340,7 +360,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
         setEdges((eds) => addEdge({
           source: edgeSource,
           target: node.id,
-          type: DEFAULT_EDGE_TYPE,
+          type: DEFAULT_EDGE_TYPE as const,
           markerEnd: {
             type: MarkerType.ArrowClosed,
             width: 15,
@@ -353,7 +373,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
     }
   }, [edgeSource, setEdges, takeSnapshot]);
 
-  const handleEdgeClick = useCallback((event, edge) => {
+  const handleEdgeClick = useCallback((event: React.MouseEvent, edge: MindMapEdge) => {
     if (event.shiftKey) {
       const label = prompt("Enter edge label (or leave empty to remove):");
       if (label !== null) {
@@ -382,7 +402,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
         sessionId,
         nodes,
         edges,
-        (chunk) => {
+        (chunk: string) => {
           fullHint += chunk;
         },
         token
@@ -392,10 +412,10 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
       }
     } catch (error) {
       console.error("Error getting hint:", error);
-      if (error.message?.includes("401")) {
+      if ((error as Error).message?.includes("401")) {
         toast.error("Session expired. Please log in again.");
       } else {
-        toast.error(error.message || "Failed to get hint");
+        toast.error((error as Error).message || "Failed to get hint");
       }
     } finally {
       setIsGeneratingHint(false);
@@ -418,10 +438,10 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
       }
     } catch (error) {
       console.error("Error generating quiz:", error);
-      if (error.message?.includes("401")) {
+      if ((error as Error).message?.includes("401")) {
         toast.error("Session expired. Please log in again.");
       } else {
-        toast.error(error.message || "Failed to generate quiz");
+        toast.error((error as Error).message || "Failed to generate quiz");
       }
     } finally {
       setIsGeneratingQuiz(false);
@@ -470,9 +490,9 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
         nodeTypes={nodeTypes}
         fitView
         zoomOnDoubleClick={false}
-        onInit={(instance) => { reactFlowInstance.current = instance; }}
-        onDoubleClick={(event) => {
-          if (event.target.closest(".react-flow__node")) return;
+        onInit={(instance: ReactFlowInstance) => { reactFlowInstance.current = instance; }}
+        onDoubleClick={(event: React.MouseEvent) => {
+          if ((event.target as HTMLElement).closest(".react-flow__node")) return;
           if (!reactFlowInstance.current) return;
           const position = reactFlowInstance.current.screenToFlowPosition({
             x: event.clientX,
@@ -483,7 +503,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
         colorMode={theme}
         proOptions={{ hideAttribution: true }}
         defaultEdgeOptions={{
-          type: DEFAULT_EDGE_TYPE,
+          type: DEFAULT_EDGE_TYPE as const,
           markerEnd: {
             type: MarkerType.ArrowClosed,
             width: 15,
@@ -495,7 +515,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }) => {
         <MiniMap
           zoomable
           pannable
-          nodeColor={(node) => node.data?.color || DEFAULT_NODE_COLOR}
+          nodeColor={(node: MindMapNode) => node.data?.color || DEFAULT_NODE_COLOR}
         />
         <Background variant="dots" gap={12} size={1} color={bgColor} />
       </ReactFlow>

@@ -6,21 +6,28 @@ import "react-pdf/dist/Page/TextLayer.css";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@5.4.296/build/pdf.worker.min.mjs`;
 
-const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initialSize = { width: 600, height: 700 } }) => {
+interface PdfViewerProps {
+  url: string;
+  onClose: () => void;
+  initialPosition?: { x: number; y: number };
+  initialSize?: { width: number; height: number };
+}
+
+const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initialSize = { width: 600, height: 700 } }: PdfViewerProps) => {
   const [position, setPosition] = useState(initialPosition);
   const [size, setSize] = useState(initialSize);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
-  const [numPages, setNumPages] = useState(null);
+  const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const dragOffset = useRef({ x: 0, y: 0 });
   const resizeStart = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
-  const handleMouseDown = useCallback((e) => {
-    if (e.target.closest(".resize-handle")) return;
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest(".resize-handle")) return;
     setIsDragging(true);
     dragOffset.current = {
       x: e.clientX - position.x,
@@ -28,7 +35,7 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
     };
   }, [position]);
 
-  const handleResizeStart = useCallback((e) => {
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setIsResizing(true);
     resizeStart.current = {
@@ -40,7 +47,7 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
   }, [size]);
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
         setPosition({
           x: e.clientX - dragOffset.current.x,
@@ -70,17 +77,17 @@ const PdfViewer = ({ url, onClose, initialPosition = { x: 100, y: 100 }, initial
     };
   }, [isDragging, isResizing]);
 
-  const onDocumentLoadSuccess = ({ numPages }) => {
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
   };
 
-  const onDocumentLoadError = (err) => {
+  const onDocumentLoadError = (err: Error) => {
     console.error("PDF load error:", err);
     setError("Failed to load PDF");
   };
 
-  const changePage = (offset) => {
-    setPageNumber((prev) => Math.min(Math.max(1, prev + offset), numPages));
+  const changePage = (offset: number) => {
+    setPageNumber((prev) => Math.min(Math.max(1, prev + offset), numPages!));
   };
 
   if (isMinimized) {
