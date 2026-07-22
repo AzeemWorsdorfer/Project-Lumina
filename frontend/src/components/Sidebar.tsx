@@ -1,7 +1,32 @@
-import { Plus, BookOpen, Trash2, PanelLeftClose, Loader2, FileText } from "lucide-react";
+import { Plus, Trash2, PanelLeftClose, Loader2, FileText } from "lucide-react";
 
-const Sidebar = ({ sessions, onNewSession, onSelectSession, onDelete, onViewPdf, isOpen, onToggle, isUploading }) => {
-  const onDeleteSession = (sessionId) => {
+interface SidebarSession {
+  id: string;
+  session_name: string;
+}
+
+interface SidebarProps {
+  sessions: SidebarSession[];
+  onNewSession: () => void;
+  onSelectSession: (id: string) => void;
+  onDelete: (id: string) => void;
+  onViewPdf: (id: string) => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  isUploading: boolean;
+}
+
+const Sidebar = ({
+  sessions,
+  onNewSession,
+  onSelectSession,
+  onDelete,
+  onViewPdf,
+  isOpen,
+  onToggle,
+  isUploading,
+}: SidebarProps) => {
+  const onDeleteSession = (sessionId: string) => {
     onDelete(sessionId);
   };
 

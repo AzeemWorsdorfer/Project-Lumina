@@ -1,12 +1,25 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Handle, Position, useReactFlow } from "@xyflow/react";
-import { getContrastColor } from "../utils/mapTransform.js";
+import { Handle, Position, useReactFlow, type Node, type NodeProps } from "@xyflow/react";
+import { getContrastColor } from "../utils/mapTransform";
 
-const EditableNode = ({ id, data, selected }) => {
+interface EditableNodeData {
+  label: string;
+  nodeType: string;
+  color: string;
+  related_source_chunk_id: string | null;
+  _editRequest?: number;
+  width?: number;
+}
+
+type EditableNodeType = Node<EditableNodeData>;
+
+type EditableNodeProps = NodeProps<EditableNodeType>;
+
+const EditableNode = ({ id, data, selected }: EditableNodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(data.label || "");
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const editRequestRef = useRef(data._editRequest);
   const { setNodes } = useReactFlow();
 
@@ -29,7 +42,7 @@ const EditableNode = ({ id, data, selected }) => {
     }
   }, [isEditing]);
 
-  const handleDoubleClick = useCallback((e) => {
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setValue(data.label || "");
     setIsEditing(true);
@@ -49,7 +62,7 @@ const EditableNode = ({ id, data, selected }) => {
   }, [value, id, setNodes]);
 
   const handleKeyDown = useCallback(
-    (e) => {
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         handleBlur();
@@ -62,7 +75,7 @@ const EditableNode = ({ id, data, selected }) => {
   );
 
   const handleChange = useCallback(
-    (e) => {
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const nextValue = e.target.value;
       setValue(nextValue);
       setNodes((nds) =>

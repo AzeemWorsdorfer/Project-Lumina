@@ -14,8 +14,8 @@ import { fetchSession, saveMindMap, getSocraticHintStream, generateQuiz } from "
 import { backendToReactFlow, DEFAULT_NODE_COLOR, DEFAULT_NODE_TYPE, DEFAULT_EDGE_TYPE } from "../utils/mapTransform.js";
 import { toast } from "sonner";
 import { Loader2, Check, AlertCircle } from "lucide-react";
-import Toolbar from "./Toolbar.jsx";
-import EditableNode from "./EditableNode.jsx";
+import Toolbar from "./Toolbar";
+import EditableNode from "./EditableNode";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import useKeyboardShortcuts from "../hooks/useKeyboardShortcuts.js";

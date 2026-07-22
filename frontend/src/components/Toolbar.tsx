@@ -1,14 +1,43 @@
 import { useState, useRef, useEffect } from "react";
 import { CircleX, Trash2, Lightbulb, Loader2, X, ChevronDown, Plus, Undo2, Redo2, HelpCircle, ListChecks, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { NODE_COLORS, DEFAULT_NODE_COLOR } from "../utils/mapTransform.js";
+import { NODE_COLORS, DEFAULT_NODE_COLOR } from "../utils/mapTransform";
+import type { NodeColorKey } from "../types";
 
-const COLOR_NAMES = Object.keys(NODE_COLORS);
+const COLOR_NAMES = Object.keys(NODE_COLORS) as NodeColorKey[];
 
 const isMac = typeof navigator !== "undefined"
   && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
 const mod = isMac ? "⌘" : "Ctrl";
+
+interface ToolbarQuizQuestion {
+  question: string;
+  options: string[];
+  correct_index: number;
+  explanation: string;
+}
+
+interface ToolbarQuiz {
+  questions: ToolbarQuizQuestion[];
+}
+
+interface ToolbarProps {
+  onAddNode: (type: string, color: string) => void;
+  onClearAll: () => void;
+  onDeleteSelected: () => void;
+  nodeCount: number;
+  selectedNodeCount: number;
+  selectedEdgeCount?: number;
+  onGetHint: () => Promise<void>;
+  hints?: string[];
+  isGeneratingHint?: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
+  onGenerateQuiz: () => Promise<void>;
+  quizzes?: ToolbarQuiz[];
+  isGeneratingQuiz?: boolean;
+}
 
 const Toolbar = ({
   onAddNode,
@@ -25,32 +54,32 @@ const Toolbar = ({
   onGenerateQuiz,
   quizzes = [],
   isGeneratingQuiz = false,
-}) => {
+}: ToolbarProps) => {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedHint, setSelectedHint] = useState(null);
+  const [selectedHint, setSelectedHint] = useState<string | null>(null);
   const [showNodeMenu, setShowNodeMenu] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showQuizDropdown, setShowQuizDropdown] = useState(false);
-  const [selectedQuiz, setSelectedQuiz] = useState(null);
-  const [selectedColor, setSelectedColor] = useState(DEFAULT_NODE_COLOR);
-  const dropdownRef = useRef(null);
-  const nodeMenuRef = useRef(null);
-  const helpRef = useRef(null);
-  const quizDropdownRef = useRef(null);
+  const [selectedQuiz, setSelectedQuiz] = useState<ToolbarQuiz | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string>(DEFAULT_NODE_COLOR);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const nodeMenuRef = useRef<HTMLDivElement>(null);
+  const helpRef = useRef<HTMLDivElement>(null);
+  const quizDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       if (selectedHint || selectedQuiz) return;
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
-      if (nodeMenuRef.current && !nodeMenuRef.current.contains(event.target)) {
+      if (nodeMenuRef.current && !nodeMenuRef.current.contains(event.target as Node)) {
         setShowNodeMenu(false);
       }
-      if (helpRef.current && !helpRef.current.contains(event.target)) {
+      if (helpRef.current && !helpRef.current.contains(event.target as Node)) {
         setShowHelp(false);
       }
-      if (quizDropdownRef.current && !quizDropdownRef.current.contains(event.target)) {
+      if (quizDropdownRef.current && !quizDropdownRef.current.contains(event.target as Node)) {
         setShowQuizDropdown(false);
       }
     };
@@ -59,7 +88,7 @@ const Toolbar = ({
   }, [selectedHint, selectedQuiz]);
 
   useEffect(() => {
-    const handleEscape = (e) => {
+    const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (selectedQuiz) {
           setSelectedQuiz(null);
@@ -449,13 +478,18 @@ const Toolbar = ({
   );
 };
 
-const QuizModal = ({ quiz, onClose }) => {
+interface QuizModalProps {
+  quiz: ToolbarQuiz;
+  onClose: () => void;
+}
+
+const QuizModal = ({ quiz, onClose }: QuizModalProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
-    const handleEscape = (e) => {
+    const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", handleEscape);
@@ -466,7 +500,7 @@ const QuizModal = ({ quiz, onClose }) => {
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
 
-  const handleSelectAnswer = (questionIndex, optionIndex) => {
+  const handleSelectAnswer = (questionIndex: number, optionIndex: number) => {
     if (showResults) return;
     setSelectedAnswers((prev) => ({
       ...prev,
@@ -530,7 +564,7 @@ const QuizModal = ({ quiz, onClose }) => {
             <div className="space-y-6">
               <p className="text-lg text-primary font-serif">{currentQuestion?.question}</p>
               <div className="space-y-3">
-                {currentQuestion?.options?.map((option, optIndex) => (
+                {currentQuestion?.options?.map((option: string, optIndex: number) => (
                   <button
                     key={optIndex}
                     onClick={() => handleSelectAnswer(currentIndex, optIndex)}
