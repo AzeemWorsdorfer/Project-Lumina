@@ -1,14 +1,26 @@
 import { useEffect, useCallback } from "react";
 
-const isEditingElement = (target) => {
-  const tag = target.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable;
+interface KeyboardShortcutHandlers {
+  onDelete?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  onAddChild?: () => void;
+  onAddSibling?: () => void;
+  onDeselectAll?: () => void;
+  onEditNode?: () => void;
+  onSave?: () => void;
+}
+
+const isEditingElement = (target: EventTarget | null): boolean => {
+  const el = target as HTMLElement | null;
+  const tag = el?.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || el?.isContentEditable || false;
 };
 
 const isMac = typeof navigator !== "undefined"
   && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
-const modKey = (e) => isMac ? e.metaKey : e.ctrlKey;
+const modKey = (e: KeyboardEvent): boolean => isMac ? e.metaKey : e.ctrlKey;
 
 const useKeyboardShortcuts = ({
   onDelete,
@@ -19,8 +31,8 @@ const useKeyboardShortcuts = ({
   onDeselectAll,
   onEditNode,
   onSave,
-}) => {
-  const handleKeyDown = useCallback((e) => {
+}: KeyboardShortcutHandlers): void => {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const editing = isEditingElement(e.target);
 
     if (modKey(e) && e.shiftKey && e.key === "Z") {
