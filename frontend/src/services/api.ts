@@ -1,32 +1,78 @@
-import { API_BASE_URL } from "../config.js";
+import type { Node, Edge } from "@xyflow/react";
+import type {
+  BackendMindMapNode,
+  BackendMindMapEdge,
+  MindMapNodeData,
+  QuizQuestion,
+} from "../types";
+import { API_BASE_URL } from "../config";
+import {
+  DEFAULT_NODE_TYPE,
+  DEFAULT_NODE_COLOR,
+  DEFAULT_EDGE_TYPE,
+  DEFAULT_EDGE_COLOR,
+} from "../utils/mapTransform";
 
-async function authFetch(url, options = {}, token = null) {
-  const headers = {
-    ...options.headers,
-  };
-  
+interface SessionResponse {
+  id: string;
+  mind_map_data?: {
+    nodes: BackendMindMapNode[];
+    edges: BackendMindMapEdge[];
+  } | null;
+}
+
+interface SaveMindMapResponse {
+  status: string;
+  message: string;
+}
+
+interface SocraticHintResponse {
+  hint_text: string;
+  suggested_node_id: string | null;
+  type: string;
+}
+
+interface QuizResponse {
+  questions: QuizQuestion[];
+}
+
+async function authFetch(
+  url: string,
+  options: RequestInit = {},
+  token: string | null = null,
+): Promise<Response> {
+  const headers: Record<string, string> = {};
+
+  if (options.headers) {
+    const h = options.headers as Record<string, string>;
+    for (const key in h) {
+      if (Object.prototype.hasOwnProperty.call(h, key)) {
+        headers[key] = h[key];
+      }
+    }
+  }
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
-  
+
   const response = await fetch(url, { ...options, headers });
-  
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    const err = new Error(error.detail || `Request failed: ${response.statusText}`);
+    const error: { detail?: string } = await response.json().catch(() => ({}));
+    const err = new Error(
+      error.detail || `Request failed: ${response.statusText}`,
+    ) as Error & { status: number };
     err.status = response.status;
     throw err;
   }
-  
+
   return response;
 }
 
-const DEFAULT_NODE_TYPE = "textCard";
-const DEFAULT_NODE_COLOR = "#fbbf24";
-const DEFAULT_EDGE_TYPE = "default";
-const DEFAULT_EDGE_COLOR = "#64748b";
-
-const nodeToBackend = (node) => ({
+const nodeToBackend = (
+  node: Node<MindMapNodeData>,
+): BackendMindMapNode => ({
   id: node.id,
   label: node.data?.label || "Untitled",
   node_type: node.data?.nodeType || DEFAULT_NODE_TYPE,
@@ -37,35 +83,46 @@ const nodeToBackend = (node) => ({
   height: node.data?.height || null,
 });
 
-const edgeToBackend = (edge) => ({
+const edgeToBackend = (edge: Edge): BackendMindMapEdge => ({
   id: edge.id,
   source: edge.source,
   target: edge.target,
   label: edge.label || null,
   edge_type: edge.type || DEFAULT_EDGE_TYPE,
-  color: edge.style?.stroke || DEFAULT_EDGE_COLOR,
+  color: (edge.style?.stroke as string) || DEFAULT_EDGE_COLOR,
 });
 
-export const fetchSession = async (sessionId, token = null) => {
+export const fetchSession = async (
+  sessionId: string,
+  token: string | null = null,
+): Promise<SessionResponse> => {
   const response = await authFetch(
     `${API_BASE_URL}/api/v1/session/${sessionId}`,
     {},
-    token
+    token,
   );
   return response.json();
 };
 
-export const fetchPdfUrl = async (sessionId, token = null) => {
+export const fetchPdfUrl = async (
+  sessionId: string,
+  token: string | null = null,
+): Promise<string> => {
   const response = await authFetch(
     `${API_BASE_URL}/api/v1/session/${sessionId}/pdf-url`,
     {},
-    token
+    token,
   );
-  const data = await response.json();
+  const data: { url: string } = await response.json();
   return data.url;
 };
 
-export const saveMindMap = async (sessionId, nodes, edges, token = null) => {
+export const saveMindMap = async (
+  sessionId: string,
+  nodes: Node<MindMapNodeData>[],
+  edges: Edge[],
+  token: string | null = null,
+): Promise<SaveMindMapResponse> => {
   const backendNodes = nodes.map(nodeToBackend);
   const backendEdges = edges.map(edgeToBackend);
 
@@ -82,13 +139,18 @@ export const saveMindMap = async (sessionId, nodes, edges, token = null) => {
         edges: backendEdges,
       }),
     },
-    token
+    token,
   );
 
   return response.json();
 };
 
-export const getSocraticHint = async (sessionId, nodes, edges, token = null) => {
+export const getSocraticHint = async (
+  sessionId: string,
+  nodes: Node<MindMapNodeData>[],
+  edges: Edge[],
+  token: string | null = null,
+): Promise<SocraticHintResponse> => {
   const backendNodes = nodes.map(nodeToBackend);
   const backendEdges = edges.map(edgeToBackend);
 
@@ -105,20 +167,26 @@ export const getSocraticHint = async (sessionId, nodes, edges, token = null) => 
         edges: backendEdges,
       }),
     },
-    token
+    token,
   );
 
   return response.json();
 };
 
-export const getSocraticHintStream = async (sessionId, nodes, edges, onChunk, token = null) => {
+export const getSocraticHintStream = async (
+  sessionId: string,
+  nodes: Node<MindMapNodeData>[],
+  edges: Edge[],
+  onChunk: ((chunk: string) => void) | null = null,
+  token: string | null = null,
+): Promise<string> => {
   const backendNodes = nodes.map(nodeToBackend);
   const backendEdges = edges.map(edgeToBackend);
 
-  const headers = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
@@ -133,15 +201,17 @@ export const getSocraticHintStream = async (sessionId, nodes, edges, onChunk, to
         nodes: backendNodes,
         edges: backendEdges,
       }),
-    }
+    },
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || `Failed to get hint: ${response.statusText}`);
+    const error: { detail?: string } = await response.json().catch(() => ({}));
+    throw new Error(
+      error.detail || `Failed to get hint: ${response.statusText}`,
+    );
   }
 
-  const reader = response.body.getReader();
+  const reader = response.body!.getReader();
   const decoder = new TextDecoder();
   let fullResponse = "";
 
@@ -169,7 +239,12 @@ export const getSocraticHintStream = async (sessionId, nodes, edges, onChunk, to
   return fullResponse;
 };
 
-export const generateQuiz = async (sessionId, nodes, edges, token = null) => {
+export const generateQuiz = async (
+  sessionId: string,
+  nodes: Node<MindMapNodeData>[],
+  edges: Edge[],
+  token: string | null = null,
+): Promise<QuizResponse> => {
   const backendNodes = nodes.map(nodeToBackend);
   const backendEdges = edges.map(edgeToBackend);
 
@@ -186,7 +261,7 @@ export const generateQuiz = async (sessionId, nodes, edges, token = null) => {
         edges: backendEdges,
       }),
     },
-    token
+    token,
   );
 
   return response.json();
