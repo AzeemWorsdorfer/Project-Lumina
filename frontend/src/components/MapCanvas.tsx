@@ -175,7 +175,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }: MapCanva
 
     try {
       const token = await getAccessToken();
-      await saveMindMap(sessionId, currentNodes, currentEdges, token);
+      await saveMindMap({ sessionId, nodes: currentNodes, edges: currentEdges, token });
       localStorage.removeItem(getDraftKey(sessionId));
       setSaveStatus("saved");
     } catch (error) {
@@ -408,13 +408,10 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }: MapCanva
       const token = await getAccessToken();
       let fullHint = "";
       await getSocraticHintStream(
-        sessionId,
-        nodes,
-        edges,
+        { sessionId, nodes, edges, token },
         (chunk: string) => {
           fullHint += chunk;
         },
-        token
       );
       if (fullHint && onAddHint) {
         onAddHint(fullHint);
@@ -441,7 +438,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }: MapCanva
 
     try {
       const token = await getAccessToken();
-      const quizData = await generateQuiz(sessionId, nodes, edges, token);
+      const quizData = await generateQuiz({ sessionId, nodes, edges, token });
       if (quizData && onAddQuiz) {
         onAddQuiz(quizData);
       }

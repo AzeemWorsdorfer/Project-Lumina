@@ -86,7 +86,7 @@ export const reactFlowToBackend = (
   return {
     nodes: nodes.map((node) => ({
       id: node.id,
-      label: node.data?.label || "",
+      label: node.data?.label || "Untitled",
       node_type: node.data?.nodeType || DEFAULT_NODE_TYPE,
       color: node.data?.color || DEFAULT_NODE_COLOR,
       position: node.position,

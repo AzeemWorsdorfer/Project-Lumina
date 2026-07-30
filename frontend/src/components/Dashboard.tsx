@@ -4,7 +4,7 @@ import MapCanvas from "./MapCanvas";
 import PdfViewer from "./PdfViewer";
 import PomodoroTimer from "./PomodoroTimer";
 import { API_BASE_URL } from "../config";
-import { fetchPdfUrl } from "../services/api";
+import { fetchPdfUrl, buildAuthHeaders } from "../services/api";
 import { toast, Toaster } from "sonner";
 import { PanelLeftOpen, BookOpen } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -49,9 +49,7 @@ export default function Dashboard() {
     try {
       const token = await getAccessToken();
       const response = await fetch(`${API_BASE_URL}/api/v1/sessions`, {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
+        headers: buildAuthHeaders(token),
       });
 
       if (response.status === 401) {
@@ -92,9 +90,7 @@ export default function Dashboard() {
           `${API_BASE_URL}/api/v1/upload-pdf?session_name=${encodeURIComponent(file.name)}`,
           {
             method: "POST",
-            headers: {
-              ...(token && { Authorization: `Bearer ${token}` }),
-            },
+            headers: buildAuthHeaders(token),
             body: formData,
           },
         );
@@ -146,9 +142,7 @@ export default function Dashboard() {
               `${API_BASE_URL}/api/v1/session/${id}`,
               {
                 method: "DELETE",
-                headers: {
-                  ...(token && { Authorization: `Bearer ${token}` }),
-                },
+                headers: buildAuthHeaders(token),
               },
             );
 
