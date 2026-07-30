@@ -78,38 +78,42 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }: MapCanva
   const MAX_HISTORY = 50;
   const isUndoingRedoing = useRef(false);
 
-  const takeSnapshot = useCallback(() => {
-    if (isUndoingRedoing.current) return;
-    const { stack, index } = historyRef.current;
-    const snapshot: MapSnapshot = {
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      edges: JSON.parse(JSON.stringify(edges)),
-    };
-    const newStack = stack.slice(0, index + 1);
-    newStack.push(snapshot);
-    while (newStack.length > MAX_HISTORY) newStack.shift();
-    historyRef.current = { stack: newStack, index: newStack.length - 1 };
-  }, [nodes, edges]);
+  const takeSnapshot = useCallback(
+    (nextNodes?: MindMapNode[], nextEdges?: MindMapEdge[]) => {
+      if (isUndoingRedoing.current) return;
+      const { stack, index } = historyRef.current;
+      const snapshot: MapSnapshot = {
+        nodes: JSON.parse(JSON.stringify(nextNodes ?? nodes)),
+        edges: JSON.parse(JSON.stringify(nextEdges ?? edges)),
+      };
+      const newStack = stack.slice(0, index + 1);
+      newStack.push(snapshot);
+      while (newStack.length > MAX_HISTORY) newStack.shift();
+      historyRef.current = { stack: newStack, index: newStack.length - 1 };
+    },
+    [nodes, edges]
+  );
 
   const handleUndo = useCallback(() => {
     const { stack, index } = historyRef.current;
-    if (index < 0) return;
-    const snapshot = stack[index];
+    if (index <= 0) return;
     isUndoingRedoing.current = true;
-    setNodes(snapshot.nodes);
-    setEdges(snapshot.edges);
-    historyRef.current = { stack, index: index - 1 };
+    const newIndex = index - 1;
+    setNodes(stack[newIndex].nodes);
+    setEdges(stack[newIndex].edges);
+    historyRef.current = { stack, index: newIndex };
     setTimeout(() => { isUndoingRedoing.current = false; }, 0);
   }, [setNodes, setEdges]);
 
   const handleRedo = useCallback(() => {
     const { stack, index } = historyRef.current;
-    if (index >= stack.length - 2) return;
-    const snapshot = stack[index + 2];
+    if (index >= stack.length - 1) return;
     isUndoingRedoing.current = true;
+    const newIndex = index + 1;
+    const snapshot = stack[newIndex];
     setNodes(snapshot.nodes);
     setEdges(snapshot.edges);
-    historyRef.current = { stack, index: index + 1 };
+    historyRef.current = { stack, index: newIndex };
     setTimeout(() => { isUndoingRedoing.current = false; }, 0);
   }, [setNodes, setEdges]);
 
@@ -234,9 +238,9 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }: MapCanva
       },
     };
 
-    takeSnapshot();
+    takeSnapshot([...nodes, newNode]);
     setNodes((nds) => [...nds, newNode]);
-  }, [setNodes, takeSnapshot]);
+  }, [nodes, setNodes, takeSnapshot]);
 
   const handleAddChild = useCallback(() => {
     const selected = nodes.find((n) => n.selected);
@@ -266,10 +270,10 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }: MapCanva
       type: DEFAULT_EDGE_TYPE,
       markerEnd: { type: MarkerType.ArrowClosed, width: 15, height: 15 },
     };
-    takeSnapshot();
+    takeSnapshot([...nodes, childNode], [...edges, childEdge]);
     setNodes((nds) => [...nds, childNode]);
     setEdges((eds) => [...eds, childEdge]);
-  }, [nodes, takeSnapshot, setNodes, setEdges]);
+  }, [nodes, edges, takeSnapshot, setNodes, setEdges]);
 
   const handleAddSibling = useCallback(() => {
     const selected = nodes.find((n) => n.selected);
@@ -292,7 +296,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }: MapCanva
         related_source_chunk_id: null,
       },
     };
-    takeSnapshot();
+    takeSnapshot([...nodes, siblingNode]);
     setNodes((nds) => [...nds, siblingNode]);
   }, [nodes, handleAddNode, takeSnapshot, setNodes]);
 
@@ -329,15 +333,16 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }: MapCanva
           height: 15,
         },
       };
-      takeSnapshot();
-      setEdges((eds) => addEdge(newEdge, eds));
+      const nextEdges = addEdge(newEdge, edges);
+      takeSnapshot(nodes, nextEdges);
+      setEdges(nextEdges);
     },
-    [setEdges, takeSnapshot]
+    [nodes, edges, setEdges, takeSnapshot]
   );
 
   const handleClearAll = useCallback(() => {
     if (nodes.length === 0 && edges.length === 0) return;
-    takeSnapshot();
+    takeSnapshot([], []);
     setNodes([]);
     setEdges([]);
   }, [setNodes, setEdges, nodes, edges, takeSnapshot]);
@@ -345,7 +350,10 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }: MapCanva
   const handleDeleteSelected = useCallback(() => {
     const hasSelected = nodes.some((n) => n.selected) || edges.some((e) => e.selected);
     if (!hasSelected) return;
-    takeSnapshot();
+    takeSnapshot(
+      nodes.filter((node) => !node.selected),
+      edges.filter((edge) => !edge.selected)
+    );
     setNodes((nds) => nds.filter((node) => !node.selected));
     setEdges((eds) => eds.filter((edge) => !edge.selected));
   }, [setNodes, setEdges, nodes, edges, takeSnapshot]);
@@ -356,8 +364,7 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }: MapCanva
         setEdgeSource(node.id);
         toast.info("Select second node to connect", { duration: 2000 });
       } else if (edgeSource !== node.id) {
-        takeSnapshot();
-        setEdges((eds) => addEdge({
+        const newEdge = {
           source: edgeSource,
           target: node.id,
           type: DEFAULT_EDGE_TYPE as const,
@@ -366,26 +373,28 @@ const MapCanvas = ({ sessionId, hints, onAddHint, quizzes, onAddQuiz }: MapCanva
             width: 15,
             height: 15,
           },
-        }, eds));
+        };
+        const nextEdges = addEdge(newEdge, edges);
+        takeSnapshot(nodes, nextEdges);
+        setEdges(nextEdges);
         toast.success("Edge created", { duration: 2000 });
         setEdgeSource(null);
       }
     }
-  }, [edgeSource, setEdges, takeSnapshot]);
+  }, [edgeSource, nodes, edges, setEdges, takeSnapshot]);
 
   const handleEdgeClick = useCallback((event: React.MouseEvent, edge: MindMapEdge) => {
     if (event.shiftKey) {
       const label = prompt("Enter edge label (or leave empty to remove):");
       if (label !== null) {
-        takeSnapshot();
-        setEdges((eds) =>
-          eds.map((e) =>
+        const nextEdges = edges.map((e) =>
             e.id === edge.id ? { ...e, label: label || undefined } : e
-          )
-        );
+          );
+          takeSnapshot(nodes, nextEdges);
+          setEdges(nextEdges);
       }
     }
-  }, [setEdges, takeSnapshot]);
+  }, [nodes, edges, setEdges, takeSnapshot]);
 
   const handleGetHint = async () => {
     if (isPlaceholderNode(nodes) || nodes.length === 0) {
