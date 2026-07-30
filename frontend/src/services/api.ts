@@ -4,6 +4,7 @@ import type {
   BackendMindMapEdge,
   MindMapNodeData,
   QuizQuestion,
+  Quiz,
 } from "../types";
 import { API_BASE_URL } from "../config";
 import {
@@ -30,10 +31,6 @@ interface SocraticHintResponse {
   hint_text: string;
   suggested_node_id: string | null;
   type: string;
-}
-
-interface QuizResponse {
-  questions: QuizQuestion[];
 }
 
 async function authFetch(
@@ -244,7 +241,7 @@ export const generateQuiz = async (
   nodes: Node<MindMapNodeData>[],
   edges: Edge[],
   token: string | null = null,
-): Promise<QuizResponse> => {
+): Promise<Quiz> => {
   const backendNodes = nodes.map(nodeToBackend);
   const backendEdges = edges.map(edgeToBackend);
 

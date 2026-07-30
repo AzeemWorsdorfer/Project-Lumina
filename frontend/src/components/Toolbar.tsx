@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { CircleX, Trash2, Lightbulb, Loader2, X, ChevronDown, Plus, Undo2, Redo2, HelpCircle, ListChecks, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { NODE_COLORS, DEFAULT_NODE_COLOR } from "../utils/mapTransform";
-import type { NodeColorKey } from "../types";
+import type { NodeColorKey, Quiz } from "../types";
 
 const COLOR_NAMES = Object.keys(NODE_COLORS) as NodeColorKey[];
 
@@ -10,17 +10,6 @@ const isMac = typeof navigator !== "undefined"
   && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
 const mod = isMac ? "⌘" : "Ctrl";
-
-interface ToolbarQuizQuestion {
-  question: string;
-  options: string[];
-  correct_index: number;
-  explanation: string;
-}
-
-interface ToolbarQuiz {
-  questions: ToolbarQuizQuestion[];
-}
 
 interface ToolbarProps {
   onAddNode: (type: string, color: string) => void;
@@ -35,7 +24,7 @@ interface ToolbarProps {
   onUndo: () => void;
   onRedo: () => void;
   onGenerateQuiz: () => Promise<void>;
-  quizzes?: ToolbarQuiz[];
+  quizzes?: Quiz[];
   isGeneratingQuiz?: boolean;
 }
 
@@ -60,7 +49,7 @@ const Toolbar = ({
   const [showNodeMenu, setShowNodeMenu] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showQuizDropdown, setShowQuizDropdown] = useState(false);
-  const [selectedQuiz, setSelectedQuiz] = useState<ToolbarQuiz | null>(null);
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [selectedColor, setSelectedColor] = useState<string>(DEFAULT_NODE_COLOR);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const nodeMenuRef = useRef<HTMLDivElement>(null);
@@ -479,7 +468,7 @@ const Toolbar = ({
 };
 
 interface QuizModalProps {
-  quiz: ToolbarQuiz;
+  quiz: Quiz;
   onClose: () => void;
 }
 

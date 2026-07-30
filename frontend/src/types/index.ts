@@ -47,8 +47,12 @@ export interface Session {
 export interface QuizQuestion {
   question: string;
   options: string[];
-  correct_answer: string;
+  correct_index: number;
   explanation: string;
+}
+
+export interface Quiz {
+  questions: QuizQuestion[];
 }
 
 export interface SocraticHint {

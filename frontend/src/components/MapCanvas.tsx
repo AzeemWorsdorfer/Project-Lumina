@@ -21,7 +21,7 @@ import EditableNode from "./EditableNode";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import useKeyboardShortcuts from "../hooks/useKeyboardShortcuts";
-import type { MindMapNode, MindMapEdge, MindMapNodeData } from "../types";
+import type { MindMapNode, MindMapEdge, MindMapNodeData, Quiz } from "../types";
 
 const nodeTypes = { textCard: EditableNode, stickyNote: EditableNode };
 
@@ -39,8 +39,8 @@ interface MapCanvasProps {
   sessionId: string;
   hints: string[];
   onAddHint: (hint: string) => void;
-  quizzes: unknown[];
-  onAddQuiz: (quiz: unknown) => void;
+  quizzes: Quiz[];
+  onAddQuiz: (quiz: Quiz) => void;
 }
 
 const isPlaceholderNode = (nodes: MindMapNode[]): boolean => {

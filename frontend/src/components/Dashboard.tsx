@@ -9,21 +9,11 @@ import { toast, Toaster } from "sonner";
 import { PanelLeftOpen, BookOpen } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+import type { Quiz } from "../types";
 
 interface DashboardSession {
   id: string;
   session_name: string;
-}
-
-interface QuizQuestionData {
-  question: string;
-  options: string[];
-  correct_index: number;
-  explanation: string;
-}
-
-interface QuizData {
-  questions: QuizQuestionData[];
 }
 
 export default function Dashboard() {
@@ -36,10 +26,10 @@ export default function Dashboard() {
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [sessionHints, setSessionHints] = useState<Record<string, string[]>>({});
-  const [sessionQuizzes, setSessionQuizzes] = useState<Record<string, QuizData[]>>({});
+  const [sessionQuizzes, setSessionQuizzes] = useState<Record<string, Quiz[]>>({});
 
   const getHints = (): string[] => sessionHints[activeSessionId ?? ""] || [];
-  const getQuizzes = (): QuizData[] => sessionQuizzes[activeSessionId ?? ""] || [];
+  const getQuizzes = (): Quiz[] => sessionQuizzes[activeSessionId ?? ""] || [];
 
   const handleAddHint = (hint: string) => {
     setSessionHints((prev) => ({
@@ -48,7 +38,7 @@ export default function Dashboard() {
     }));
   };
 
-  const handleAddQuiz = (quiz: QuizData) => {
+  const handleAddQuiz = (quiz: Quiz) => {
     setSessionQuizzes((prev) => ({
       ...prev,
       [activeSessionId!]: [...(prev[activeSessionId!] || []), quiz],
