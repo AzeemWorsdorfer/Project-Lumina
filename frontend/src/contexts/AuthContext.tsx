@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
+import type { User } from "../types";
 import { supabase } from "../lib/supabase";
 
 interface AuthContextValue {

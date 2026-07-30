@@ -55,6 +55,14 @@ export interface Quiz {
   questions: QuizQuestion[];
 }
 
+export interface User {
+  id: string;
+  email?: string;
+  created_at: string;
+  role?: string;
+  last_sign_in_at?: string;
+}
+
 export interface SocraticHint {
   hint_text: string;
   related_concept: string;
