@@ -100,7 +100,7 @@ export const reactFlowToBackend = (
       target: edge.target,
       label: edge.label || null,
       edge_type: edge.type || DEFAULT_EDGE_TYPE,
-      color: (edge.style?.stroke as string) || DEFAULT_EDGE_COLOR,
+      color: edge.style?.stroke || DEFAULT_EDGE_COLOR,
     })),
   };
 };
