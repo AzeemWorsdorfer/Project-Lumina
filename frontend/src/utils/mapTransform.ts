@@ -1,4 +1,12 @@
-export const NODE_COLORS = {
+import type { Node, Edge } from "@xyflow/react";
+import type {
+  BackendMindMapNode,
+  BackendMindMapEdge,
+  MindMapNodeData,
+  NodeColorKey,
+} from "../types";
+
+export const NODE_COLORS: Record<NodeColorKey, string> = {
   yellow: "#fbbf24",
   blue: "#60a5fa",
   green: "#4ade80",
@@ -9,7 +17,7 @@ export const NODE_COLORS = {
   red: "#f87171",
 };
 
-export const NODE_COLORS_LIGHT = {
+export const NODE_COLORS_LIGHT: Record<NodeColorKey, string> = {
   yellow: "#eab308",
   blue: "#3b82f6",
   green: "#22c55e",
@@ -25,12 +33,22 @@ export const DEFAULT_NODE_TYPE = "textCard";
 export const DEFAULT_EDGE_TYPE = "default";
 export const DEFAULT_EDGE_COLOR = "#64748b";
 
-export const backendToReactFlow = (mindMapData) => {
+interface BackendMindMapData {
+  nodes: BackendMindMapNode[];
+  edges: BackendMindMapEdge[];
+}
+
+interface ReactFlowMindMapData {
+  nodes: Node<MindMapNodeData>[];
+  edges: Edge[];
+}
+
+export const backendToReactFlow = (mindMapData: BackendMindMapData): ReactFlowMindMapData => {
   if (!mindMapData || !mindMapData.nodes || !mindMapData.edges) {
     return { nodes: [], edges: [] };
   }
 
-  const nodes = mindMapData.nodes.map((node) => ({
+  const nodes: Node<MindMapNodeData>[] = mindMapData.nodes.map((node) => ({
     id: node.id,
     type: node.node_type || "textCard",
     position: node.position,
@@ -48,7 +66,7 @@ export const backendToReactFlow = (mindMapData) => {
     },
   }));
 
-  const edges = mindMapData.edges.map((edge) => ({
+  const edges: Edge[] = mindMapData.edges.map((edge) => ({
     id: edge.id,
     source: edge.source,
     target: edge.target,
@@ -61,12 +79,15 @@ export const backendToReactFlow = (mindMapData) => {
   return { nodes, edges };
 };
 
-export const reactFlowToBackend = (nodes, edges) => {
+export const reactFlowToBackend = (
+  nodes: Node<MindMapNodeData>[],
+  edges: Edge[]
+): { nodes: BackendMindMapNode[]; edges: BackendMindMapEdge[] } => {
   return {
     nodes: nodes.map((node) => ({
       id: node.id,
-      label: node.data?.label || "",
-      node_type: node.data?.nodeType || "textCard",
+      label: node.data?.label || "Untitled",
+      node_type: node.data?.nodeType || DEFAULT_NODE_TYPE,
       color: node.data?.color || DEFAULT_NODE_COLOR,
       position: node.position,
       related_source_chunk_id: node.data?.related_source_chunk_id || null,
@@ -78,13 +99,13 @@ export const reactFlowToBackend = (nodes, edges) => {
       source: edge.source,
       target: edge.target,
       label: edge.label || null,
-      edge_type: edge.type || "default",
+      edge_type: edge.type || DEFAULT_EDGE_TYPE,
       color: edge.style?.stroke || DEFAULT_EDGE_COLOR,
     })),
   };
 };
 
-export const getContrastColor = (hexColor) => {
+export const getContrastColor = (hexColor: string): string => {
   const hex = hexColor.replace("#", "");
   const r = parseInt(hex.substr(0, 2), 16);
   const g = parseInt(hex.substr(2, 2), 16);

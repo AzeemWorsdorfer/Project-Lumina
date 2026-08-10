@@ -3,39 +3,45 @@ import Sidebar from "./Sidebar";
 import MapCanvas from "./MapCanvas";
 import PdfViewer from "./PdfViewer";
 import PomodoroTimer from "./PomodoroTimer";
-import { API_BASE_URL } from "../config.js";
-import { fetchPdfUrl } from "../services/api.js";
+import { API_BASE_URL } from "../config";
+import { fetchPdfUrl, buildAuthHeaders } from "../services/api";
 import { toast, Toaster } from "sonner";
 import { PanelLeftOpen, BookOpen } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+import type { Quiz } from "../types";
+
+interface DashboardSession {
+  id: string;
+  session_name: string;
+}
 
 export default function Dashboard() {
   const { getAccessToken } = useAuth();
   const { theme } = useTheme();
-  const [sessions, setSessions] = useState([]);
-  const [activeSessionId, setActiveSessionId] = useState(null);
+  const [sessions, setSessions] = useState<DashboardSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [showPdfViewer, setShowPdfViewer] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState(null);
-  const [sessionHints, setSessionHints] = useState({});
-  const [sessionQuizzes, setSessionQuizzes] = useState({});
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [sessionHints, setSessionHints] = useState<Record<string, string[]>>({});
+  const [sessionQuizzes, setSessionQuizzes] = useState<Record<string, Quiz[]>>({});
 
-  const getHints = () => sessionHints[activeSessionId] || [];
-  const getQuizzes = () => sessionQuizzes[activeSessionId] || [];
+  const getHints = (): string[] => sessionHints[activeSessionId ?? ""] || [];
+  const getQuizzes = (): Quiz[] => sessionQuizzes[activeSessionId ?? ""] || [];
 
-  const handleAddHint = (hint) => {
+  const handleAddHint = (hint: string) => {
     setSessionHints((prev) => ({
       ...prev,
-      [activeSessionId]: [...(prev[activeSessionId] || []), hint],
+      [activeSessionId!]: [...(prev[activeSessionId!] || []), hint],
     }));
   };
 
-  const handleAddQuiz = (quiz) => {
+  const handleAddQuiz = (quiz: Quiz) => {
     setSessionQuizzes((prev) => ({
       ...prev,
-      [activeSessionId]: [...(prev[activeSessionId] || []), quiz],
+      [activeSessionId!]: [...(prev[activeSessionId!] || []), quiz],
     }));
   };
 
@@ -43,9 +49,7 @@ export default function Dashboard() {
     try {
       const token = await getAccessToken();
       const response = await fetch(`${API_BASE_URL}/api/v1/sessions`, {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
+        headers: buildAuthHeaders(token),
       });
 
       if (response.status === 401) {
@@ -62,7 +66,7 @@ export default function Dashboard() {
       setSessions(data);
     } catch (error) {
       console.error("Error loading sessions:", error);
-      toast.error(error.message || "Failed to load sessions");
+      toast.error((error as Error).message || "Failed to load sessions");
     }
   };
 
@@ -71,8 +75,9 @@ export default function Dashboard() {
     input.type = "file";
     input.accept = "application/pdf";
 
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
+    input.onchange = async (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
       if (!file) return;
 
       setIsUploading(true);
@@ -85,9 +90,7 @@ export default function Dashboard() {
           `${API_BASE_URL}/api/v1/upload-pdf?session_name=${encodeURIComponent(file.name)}`,
           {
             method: "POST",
-            headers: {
-              ...(token && { Authorization: `Bearer ${token}` }),
-            },
+            headers: buildAuthHeaders(token),
             body: formData,
           },
         );
@@ -106,7 +109,7 @@ export default function Dashboard() {
         toast.success("Study session created successfully!");
       } catch (error) {
         console.error("Upload error:", error);
-        toast.error(error.message || "Failed to upload PDF");
+        toast.error((error as Error).message || "Failed to upload PDF");
       } finally {
         setIsUploading(false);
       }
@@ -119,12 +122,12 @@ export default function Dashboard() {
     fetchSessions();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSelectSession = (id) => {
+  const handleSelectSession = (id: string) => {
     console.log("Switching to session:", id);
     setActiveSessionId(id);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (id: string) => {
     toast.warning("Are you sure you want to delete this session?", {
       cancel: {
         label: "Cancel",
@@ -139,9 +142,7 @@ export default function Dashboard() {
               `${API_BASE_URL}/api/v1/session/${id}`,
               {
                 method: "DELETE",
-                headers: {
-                  ...(token && { Authorization: `Bearer ${token}` }),
-                },
+                headers: buildAuthHeaders(token),
               },
             );
 
@@ -162,14 +163,14 @@ export default function Dashboard() {
             }
           } catch (error) {
             console.error("Delete failed:", error);
-            toast.error(error.message || "Failed to delete session");
+            toast.error((error as Error).message || "Failed to delete session");
           }
         },
       },
     });
   };
 
-  const handleViewPdf = async (sessionId) => {
+  const handleViewPdf = async (sessionId: string) => {
     try {
       const token = await getAccessToken();
       const url = await fetchPdfUrl(sessionId, token);
@@ -177,7 +178,7 @@ export default function Dashboard() {
       setShowPdfViewer(true);
     } catch (error) {
       console.error("Error fetching PDF:", error);
-      if (error.message?.includes("401")) {
+      if ((error as Error).message?.includes("401")) {
         toast.error("Session expired. Please log in again.");
       } else {
         toast.error("Failed to load PDF");

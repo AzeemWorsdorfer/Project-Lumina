@@ -12,7 +12,7 @@ export default function SignupPage() {
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
@@ -31,7 +31,7 @@ export default function SignupPage() {
       toast.success("Account created! You can now sign in.");
       navigate("/login");
     } catch (error) {
-      toast.error(error.message || "Failed to create account");
+      toast.error((error as Error).message || "Failed to create account");
     } finally {
       setIsLoading(false);
     }

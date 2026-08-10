@@ -10,17 +10,19 @@ const PRESETS = [
 const BREATHING_PHASE_DURATION = 3000;
 const BREATHING_ROUNDS = 3;
 
+type TimerState = "idle" | "session" | "break" | "breathing";
+
 export default function PomodoroTimer() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [state, setState] = useState("idle");
+  const [state, setState] = useState<TimerState>("idle");
   const [presetIndex, setPresetIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(PRESETS[0].work);
   const [breathingPhase, setBreathingPhase] = useState(0);
   const [breathingRound, setBreathingRound] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
-  const intervalRef = useRef(null);
-  const breathingIntervalRef = useRef(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const breathingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const currentPreset = PRESETS[presetIndex];
   const isBreak = state === "break";
@@ -128,7 +130,7 @@ export default function PomodoroTimer() {
     setIsMinimized(false);
   };
 
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -149,7 +151,7 @@ export default function PomodoroTimer() {
     }
   };
 
-  const handlePresetChange = (index) => {
+  const handlePresetChange = (index: number) => {
     setPresetIndex(index);
     if (state === "idle") {
       setTimeRemaining(PRESETS[index].work);

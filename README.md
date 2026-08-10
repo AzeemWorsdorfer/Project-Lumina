@@ -2,15 +2,13 @@
 
 ### AI-Powered Socratic Learning
 
-**Proof of Concept** &nbsp;|&nbsp; [LinkedIn](https://www.linkedin.com/in/muhammad-azeem-worsdorfer)
+[LinkedIn](https://www.linkedin.com/in/muhammad-azeem-worsdorfer)
 
 ---
 
 ## About
-
-Lumina is a proof-of-concept exploring how AI can transform passive reading into active, relational thinking. It uses Socratic questioning and interactive mind mapping to help students identify knowledge gaps in real-time. A full-featured version is planned for commercial release.
-
-This project demonstrates full-stack development skills, AI/ML integration, and building products with real-world educational impact.
+ 
+Lumina is a proof-of-concept exploring how AI can transform passive reading into active, relational thinking. It uses Socratic questioning and interactive mind mapping to help students identify knowledge gaps in real-time.
 
 ## Problem & Solution
 
@@ -66,7 +64,15 @@ This project demonstrates full-stack development skills, AI/ML integration, and 
 
 ## Getting Started
 
-### 1. Backend
+A `Makefile` is provided at the repo root for the common dev workflow.
+
+```bash
+make help        # list available targets
+make install     # install backend + frontend dependencies
+make dev         # run backend + frontend concurrently
+```
+
+### 1. Backend (manual)
 
 ```bash
 cd backend
@@ -74,7 +80,7 @@ uv sync
 uv run uvicorn app.main:app --reload
 ```
 
-### 2. Frontend
+### 2. Frontend (manual)
 
 ```bash
 cd frontend
@@ -120,6 +126,12 @@ Lumina/
         ├── lib/                  # Libraries
         └── utils/                # Utilities
 ```
+
+## Roadmap
+
+Planned improvements (no fixed timeline):
+
+- Improved UI/UX
 
 ## Contact
 
