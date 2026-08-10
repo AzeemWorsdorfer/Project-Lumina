@@ -4,9 +4,9 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Add `User` type to `src/types/index.ts` matching the Supabase user shape (as referenced in the migration spec).
-- [ ] Update `AuthContext.tsx` to import `User` from shared types instead of from `@supabase/supabase-js` (optional — only if the shared User type is preferable).
-- [ ] Add `"strict": true` to `tsconfig.node.json` to match `tsconfig.app.json`.
-- [ ] Verify: `npm run typecheck` and `npm run build` both pass.
+- [x] Add `User` type to `src/types/index.ts` matching the Supabase user shape (as referenced in the migration spec).
+- [x] Update `AuthContext.tsx` to import `User` from shared types instead of from `@supabase/supabase-js` (optional — only if the shared User type is preferable).
+- [x] Add `"strict": true` to `tsconfig.node.json` to match `tsconfig.app.json`.
+- [x] Verify: `npm run typecheck` and `npm run build` both pass.
